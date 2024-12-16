@@ -20,6 +20,7 @@ public class PvcApi: Controller
     {
         try
         {
+            _logger.LogInformation("GET /files/queued");
             var fps = FfmpegCoreService.Instance.FileProcesses.Select(fp => fp.Value)
                 .ToList();
             return Ok(fps);

@@ -1,8 +1,13 @@
 .git/
 .idea/
 bin/
+obj/
 build/
+Debug/
 node_modules/
+.angular/
+.vscode/
 wwwroot/
 *.log
 *.user
+*.cache
