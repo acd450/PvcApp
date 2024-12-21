@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using Microsoft.AspNetCore.SpaServices.AngularCli;
 using Microsoft.OpenApi.Models;
 using NLog.Extensions.Logging;
 using PlexVideoConverter.Models;
@@ -29,6 +31,10 @@ builder.Services.AddSwaggerGen(options =>
         }
     });
 });
+builder.Services.AddSpaStaticFiles(configuration =>
+{
+    configuration.RootPath = "ClientApp/pvc-app/dist";
+});
 builder.Logging.ClearProviders();
 builder.Host.UseNLog();
 
@@ -55,13 +61,40 @@ else
     app.UseSwaggerUI(options => 
     {
         options.SwaggerEndpoint("/swagger/v1/swagger.json", "v1");
-        options.RoutePrefix = string.Empty;
+        options.RoutePrefix = "swagger";
     });
 }
 
 
 app.UseHttpsRedirection();
+
+app.UseDefaultFiles();
 app.UseStaticFiles();
+if (!app.Environment.IsDevelopment()) app.UseSpaStaticFiles();
+
+app.UseSpa(spa =>
+{
+    spa.Options.SourcePath = "ClientApp/pvc-app";
+    if (app.Environment.IsDevelopment())
+    {
+        //The below should work but isn't
+        //spa.UseAngularCliServer(npmScript: "start");
+        string angularProjectPath = spa.Options.SourcePath;
+
+        ProcessStartInfo psi = new ProcessStartInfo
+        {
+            FileName = "npm",
+            Arguments = "start",
+            WorkingDirectory = angularProjectPath,
+            UseShellExecute = true,
+            WindowStyle = ProcessWindowStyle.Hidden
+        };
+
+        Process? process = Process.Start(psi);
+
+        spa.UseProxyToSpaDevelopmentServer("http://localhost:4200");
+    }
+});
 
 app.UseRouting();
 
@@ -74,6 +107,8 @@ app.MapControllers();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+//Todo test if this is needed
+app.MapFallbackToFile("ClientApp/pvc-app/dist/pvc-app/browser/index.html");
 
 SettingsService.Instance.FfmpegSettings = config.GetSection("FfmpegSettings").Get<FfmpegSettings>();
 
