@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Microsoft.AspNetCore.SpaServices.AngularCli;
 using Microsoft.OpenApi.Models;
 using NLog.Extensions.Logging;
@@ -74,7 +75,25 @@ if (!app.Environment.IsDevelopment()) app.UseSpaStaticFiles();
 app.UseSpa(spa =>
 {
     spa.Options.SourcePath = "ClientApp/pvc-app";
-    if (app.Environment.IsDevelopment()) spa.UseAngularCliServer(npmScript: "start");
+    if (app.Environment.IsDevelopment())
+    {
+        //The below should work but isn't
+        //spa.UseAngularCliServer(npmScript: "start");
+        string angularProjectPath = spa.Options.SourcePath;
+
+        ProcessStartInfo psi = new ProcessStartInfo
+        {
+            FileName = "npm",
+            Arguments = "start",
+            WorkingDirectory = angularProjectPath,
+            UseShellExecute = true,
+            WindowStyle = ProcessWindowStyle.Hidden
+        };
+
+        Process? process = Process.Start(psi);
+
+        spa.UseProxyToSpaDevelopmentServer("http://localhost:4200");
+    }
 });
 
 app.UseRouting();
