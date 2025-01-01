@@ -31,4 +31,20 @@ public class PvcApi: Controller
             return BadRequest(ex.Message);
         }
     }
+
+    [HttpGet("/files/settings")]
+    public ActionResult<List<FileListenerSettings>> GetFilesInSettings()
+    {
+        try
+        {
+            _logger.LogInformation("GET /files/settings");
+            var fls = SettingsService.Instance.FileListenerSettings;
+            return Ok(fls);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("Error in /files/queued", ex);
+            return BadRequest(ex.Message);
+        }
+    }
 }

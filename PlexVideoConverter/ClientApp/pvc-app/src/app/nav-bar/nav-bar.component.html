@@ -1,1 +1,15 @@
-<p>nav-bar works!</p>
+<mat-toolbar style="height: 65px; background: grey; display: flex;">
+  <div>Plex Video Converter</div>
+  <button mat-fab style="margin: auto; justify-self: flex-start" routerLink="" (click)="sendHome()">
+    <mat-icon fontIcon="home"/>
+  </button>
+  <button mat-fab style="margin: auto;" [routerLink]="'/list'">
+    <mat-icon fontIcon="list"/>
+  </button>
+  <button mat-fab style="margin: auto;" [routerLink]="'/settings'">
+    <mat-icon fontIcon="settings"/>
+  </button>
+  <button mat-fab style="margin: auto; justify-self: flex-end" routerLink="/about">
+    <mat-icon fontIcon="info"/>
+  </button>
+</mat-toolbar>
