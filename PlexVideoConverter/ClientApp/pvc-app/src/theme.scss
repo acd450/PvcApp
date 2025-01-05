@@ -1,31 +1,20 @@
 ﻿@use '@angular/material' as mat;
 
-$m3-dark-theme: mat.define-theme((
-  color: (
-    theme-type: dark,
-    primary: mat.$chartreuse-palette,
-    tertiary: mat.$blue-palette,
-  ),
-  density: 2
-));
-
-$m3-light-theme: mat.define-theme((
-  color: (
-    primary: mat.$chartreuse-palette,
-    tertiary: mat.$blue-palette,
-  ),
-  density: 2
-));
-
-.dark-theme {
-  @include mat.all-component-themes($m3-dark-theme);
-}
-
-.light-theme {
-  @include mat.all-component-themes($m3-light-theme);
-}
-
 html {
   color-scheme: dark;
-  @include mat.all-component-themes($m3-dark-theme);
+  @include mat.theme((
+    primary: mat.$chartreuse-palette,
+    tertiary: mat.$blue-palette,
+    typography: Roboto,
+    density: 0
+  ));
+}
+
+body {
+  background: var(--mat-sys-surface);
+  color: var(--mat-sys-on-surface);
+}
+
+body.light-mode {
+  color-scheme: light;
 }

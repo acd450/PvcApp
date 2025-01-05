@@ -4,8 +4,9 @@ using PlexVideoConverter.Services;
 
 namespace PlexVideoConverter.Controllers;
 
-[Route("pvc/[controller]")]
-public class PvcApi: Controller
+[Route("api/[controller]")]
+[ApiController]
+public class PvcApi: ControllerBase
 {
     private readonly ILogger<PvcApi> _logger;
 
