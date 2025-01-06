@@ -8,8 +8,8 @@ public class FileListenerService
 {
     private static Logger logger = LogManager.GetCurrentClassLogger();
     
-    private static FileListenerService _instance;
-    public static FileListenerService Instance => _instance == null ? new FileListenerService() : _instance;
+    private static readonly Lazy<FileListenerService> _instance = new (() => new FileListenerService());
+    public static FileListenerService Instance => _instance.Value;
 
     private List<FileSystemWatcher> _listFileSystemWatcher = new();
     

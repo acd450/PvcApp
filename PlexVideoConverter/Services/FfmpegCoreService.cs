@@ -7,8 +7,8 @@ namespace PlexVideoConverter.Services;
 
 public class FfmpegCoreService
 {
-    private static FfmpegCoreService _instance;
-    public static FfmpegCoreService Instance => _instance ??= new FfmpegCoreService();
+    private static readonly Lazy<FfmpegCoreService> _instance = new (() => new FfmpegCoreService());
+    public static FfmpegCoreService Instance => _instance.Value;
     
     private static Logger logger = LogManager.GetCurrentClassLogger();
 

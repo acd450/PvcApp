@@ -8,13 +8,12 @@ public class SettingsService
 {
     private static Logger logger = LogManager.GetCurrentClassLogger();
     
-    private static SettingsService _instance;
-    
-    public static SettingsService Instance => _instance == null ? new SettingsService() : _instance;
+    private static readonly Lazy<SettingsService> _instance = new (() => new SettingsService());
+    public static SettingsService Instance => _instance.Value;
 
     public List<FileListenerSettings> FileListenerSettings = new();
-    
-    public FfmpegSettings? FfmpegSettings = new();
+
+    public FfmpegSettings? FfmpegSettings { get; set; } = new();
     
     public void PopulateGlobalSettings()
     {
@@ -39,6 +38,7 @@ public class SettingsService
         catch (Exception ex)
         {
             Console.WriteLine("Error in GlobalSettingsService. " + ex.Message);
+            logger.Error("Error in PopulateGlobalSettings. " + ex.Message, ex);
         }
     }
     

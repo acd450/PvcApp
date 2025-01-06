@@ -29,6 +29,8 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 builder.Services.AddMvc(option => option.EnableEndpointRouting = false);
+builder.Services.AddSingleton<FileListenerService>();
+builder.Services.AddSingleton<FfmpegCoreService>();
 builder.Logging.ClearProviders();
 builder.Host.UseNLog();
 
@@ -129,5 +131,6 @@ app.UseWhen((ctx) =>
 // app.MapFallbackToFile("ClientApp/pvc-app/dist/pvc-app/browser/index.html");
 
 SettingsService.Instance.FfmpegSettings = config.GetSection("FfmpegSettings").Get<FfmpegSettings>();
+SettingsService.Instance.PopulateGlobalSettings();
 
 app.Run();
