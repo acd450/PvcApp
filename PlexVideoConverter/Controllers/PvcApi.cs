@@ -4,8 +4,9 @@ using PlexVideoConverter.Services;
 
 namespace PlexVideoConverter.Controllers;
 
-[Route("pvc/[controller]")]
-public class PvcApi: Controller
+[Route("api/[controller]")]
+[ApiController]
+public class PvcApi: ControllerBase
 {
     private readonly ILogger<PvcApi> _logger;
 
@@ -28,6 +29,38 @@ public class PvcApi: Controller
         catch (Exception ex)
         {
             _logger.LogError("Error in /files/queued", ex);
+            return BadRequest(ex.Message);
+        }
+    }
+
+    [HttpGet("/files/settings")]
+    public ActionResult<List<FileListenerSettings>> GetFilesInSettings()
+    {
+        try
+        {
+            _logger.LogInformation("GET /files/settings");
+            var fls = SettingsService.Instance.FileListenerSettings;
+            return Ok(fls);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("Error in /files/queued", ex);
+            return BadRequest(ex.Message);
+        }
+    }
+
+    [HttpGet("/system/settings")]
+    public ActionResult<FfmpegSettings> GetSystemSettings()
+    {
+        try
+        {
+            _logger.LogInformation("GET /system/settings");
+            var fs = SettingsService.Instance.FfmpegSettings;
+            return Ok(fs);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("Error in /system/settings", ex);
             return BadRequest(ex.Message);
         }
     }

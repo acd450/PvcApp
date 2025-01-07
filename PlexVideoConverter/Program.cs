@@ -1,16 +1,23 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.SpaServices.AngularCli;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.OpenApi.Models;
 using NLog.Extensions.Logging;
 using PlexVideoConverter.Models;
 using PlexVideoConverter.Services;
 using NLog.Web;
+using PlexVideoConverter.Controllers;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllersWithViews();
 builder.Services.AddControllers();
+
+builder.Services.AddSpaStaticFiles(configuration =>
+{
+    configuration.RootPath = "ClientApp/pvc-app/dist";
+});
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -18,23 +25,12 @@ builder.Services.AddSwaggerGen(options =>
     {
         Version = "v1",
         Title = "PVC API",
-        Description = "An ASP.NET Core Web API for managing the PVC application",
-        Contact = new OpenApiContact
-        {
-            Name = "Example Contact",
-            Url = new Uri("https://example.com/contact")
-        },
-        License = new OpenApiLicense
-        {
-            Name = "Example License",
-            Url = new Uri("https://example.com/license")
-        }
+        Description = "An ASP.NET Core Web API for managing the PVC application"
     });
 });
-builder.Services.AddSpaStaticFiles(configuration =>
-{
-    configuration.RootPath = "ClientApp/pvc-app/dist";
-});
+builder.Services.AddMvc(option => option.EnableEndpointRouting = false);
+builder.Services.AddSingleton<FileListenerService>();
+builder.Services.AddSingleton<FfmpegCoreService>();
 builder.Logging.ClearProviders();
 builder.Host.UseNLog();
 
@@ -72,44 +68,69 @@ app.UseDefaultFiles();
 app.UseStaticFiles();
 if (!app.Environment.IsDevelopment()) app.UseSpaStaticFiles();
 
-app.UseSpa(spa =>
-{
-    spa.Options.SourcePath = "ClientApp/pvc-app";
-    if (app.Environment.IsDevelopment())
-    {
-        //The below should work but isn't
-        //spa.UseAngularCliServer(npmScript: "start");
-        string angularProjectPath = spa.Options.SourcePath;
-
-        ProcessStartInfo psi = new ProcessStartInfo
-        {
-            FileName = "npm",
-            Arguments = "start",
-            WorkingDirectory = angularProjectPath,
-            UseShellExecute = true,
-            WindowStyle = ProcessWindowStyle.Hidden
-        };
-
-        Process? process = Process.Start(psi);
-
-        spa.UseProxyToSpaDevelopmentServer("http://localhost:4200");
-    }
+app.UseCors(corsBuilder =>
+{ 
+    corsBuilder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod(); // Configures CORS to allow any origin, header, and method.
 });
 
 app.UseRouting();
 
-app.UseAuthorization();
-app.UseAuthorization();
 app.MapControllers();
 
 //app.MapSwagger();
+app.UseMvc(routes =>
+{
+    routes.MapRoute(
+        name: "default",
+        template: "{controller=Home}/{action=Index}");
+});
+// app.MapControllerRoute(
+//     name: "default",
+//     pattern: "{controller=Home}/{action=Index}/{id?}");
 
-app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
+var excludedPaths = new PathString[] { "/api" };
+
+app.UseWhen((ctx) =>
+{
+    var path = ctx.Request.Path;
+    return !Array.Exists(excludedPaths,
+        excluded => path.StartsWithSegments(excluded, StringComparison.OrdinalIgnoreCase));
+}, then =>
+{
+    if (builder.Environment.IsProduction())
+    {
+        then.UseSpaStaticFiles();
+    }
+
+    then.UseSpa(spa =>
+    {
+        spa.Options.SourcePath = "ClientApp/pvc-app";
+        if (app.Environment.IsDevelopment())
+        {
+            //The below should work but isn't
+            //spa.UseAngularCliServer(npmScript: "start");
+            string angularProjectPath = spa.Options.SourcePath;
+
+            ProcessStartInfo psi = new ProcessStartInfo
+            {
+                FileName = "npm",
+                Arguments = "start",
+                WorkingDirectory = angularProjectPath,
+                UseShellExecute = true,
+                WindowStyle = ProcessWindowStyle.Hidden
+            };
+
+            Process? process = Process.Start(psi);
+
+            spa.UseProxyToSpaDevelopmentServer("http://localhost:4200");
+        }
+    });
+});
+
 //Todo test if this is needed
-app.MapFallbackToFile("ClientApp/pvc-app/dist/pvc-app/browser/index.html");
+// app.MapFallbackToFile("ClientApp/pvc-app/dist/pvc-app/browser/index.html");
 
 SettingsService.Instance.FfmpegSettings = config.GetSection("FfmpegSettings").Get<FfmpegSettings>();
+SettingsService.Instance.PopulateGlobalSettings();
 
 app.Run();
