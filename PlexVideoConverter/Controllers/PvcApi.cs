@@ -48,20 +48,4 @@ public class PvcApi: ControllerBase
             return BadRequest(ex.Message);
         }
     }
-
-    [HttpGet("/system/settings")]
-    public ActionResult<FfmpegSettings> GetSystemSettings()
-    {
-        try
-        {
-            _logger.LogInformation("GET /system/settings");
-            var fs = SettingsService.Instance.FfmpegSettings;
-            return Ok(fs);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError("Error in /system/settings", ex);
-            return BadRequest(ex.Message);
-        }
-    }
 }

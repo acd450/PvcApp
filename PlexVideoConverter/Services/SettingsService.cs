@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.Diagnostics;
+using System.Text.Json;
 using NLog;
 using PlexVideoConverter.Models;
 
@@ -14,6 +15,8 @@ public class SettingsService
     public List<FileListenerSettings> FileListenerSettings = new();
 
     public FfmpegSettings? FfmpegSettings { get; set; } = new();
+
+    public Process? npmProcess { get; set; }
     
     public void PopulateGlobalSettings()
     {

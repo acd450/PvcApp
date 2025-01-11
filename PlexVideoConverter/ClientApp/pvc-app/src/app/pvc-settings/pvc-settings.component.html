@@ -1,1 +1,26 @@
-<p>pvc-settings works!</p>
+<mat-card style="max-width: 650px; margin: 25px auto 0 auto;">
+  <mat-card-header>
+    <mat-card-title>Ffmpeg Settings</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    <form [formGroup]="ffmpegFormGroup">
+      <div class="pvc-settings-container">
+        <div class="pvc-settings-text">Video Quality:</div>
+        <mat-slider min="1" max="51" step="1">
+          <input matSliderThumb formControlName="videoQuality">
+        </mat-slider>
+        <div class="pvc-settings-text">{{videoQualityControl.value}} CRF</div>
+      </div>
+      <div class="pvc-settings-container">
+        <div class="pvc-settings-text">Log Out Every: </div>
+        <mat-slider min="1" max="50" step="1">
+          <input matSliderThumb formControlName="reportPercentProgress">
+        </mat-slider>
+        <div class="pvc-settings-text"> {{reportPercentProgressControl.value}} %</div>
+      </div>
+      <div>Settings File Location: {{ffmpegSettingsLocationControl.value}}</div>
+    </form>
+
+    <button mat-raised-button color="primary" (click)="updateSettings()">Update Settings</button>
+  </mat-card-content>
+</mat-card>

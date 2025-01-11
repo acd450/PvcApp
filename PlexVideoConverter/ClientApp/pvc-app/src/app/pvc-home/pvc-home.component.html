@@ -1,1 +1,21 @@
 <h1>Home</h1>
+
+<mat-card>
+  <mat-card-header>
+    <mat-card-title>Video Files</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    <input type="file" class="file-input" webkitdirectory directory multiple
+           (change)="onFolderSelected($event)" #fileUpload>
+
+    <div class="file-upload">
+
+      {{folderName || "No file uploaded yet."}}
+
+      <button mat-mini-fab color="primary" class="upload-btn"
+              (click)="fileUpload.click()">
+        <mat-icon>attach_file</mat-icon>
+      </button>
+    </div>
+  </mat-card-content>
+</mat-card>

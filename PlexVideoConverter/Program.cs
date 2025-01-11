@@ -1,12 +1,10 @@
 using System.Diagnostics;
-using Microsoft.AspNetCore.SpaServices.AngularCli;
-using Microsoft.Extensions.FileProviders;
 using Microsoft.OpenApi.Models;
+using NLog;
 using NLog.Extensions.Logging;
+using NLog.Web;
 using PlexVideoConverter.Models;
 using PlexVideoConverter.Services;
-using NLog.Web;
-using PlexVideoConverter.Controllers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -40,7 +38,7 @@ var config = new ConfigurationBuilder()
     .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
     .Build();
 
-NLog.LogManager.Configuration = new NLogLoggingConfiguration(config.GetSection("NLog"));
+LogManager.Configuration = new NLogLoggingConfiguration(config.GetSection("NLog"));
 
 var app = builder.Build();
 
@@ -77,16 +75,12 @@ app.UseRouting();
 
 app.MapControllers();
 
-//app.MapSwagger();
 app.UseMvc(routes =>
 {
     routes.MapRoute(
         name: "default",
         template: "{controller=Home}/{action=Index}");
 });
-// app.MapControllerRoute(
-//     name: "default",
-//     pattern: "{controller=Home}/{action=Index}/{id?}");
 
 var excludedPaths = new PathString[] { "/api" };
 
@@ -120,7 +114,8 @@ app.UseWhen((ctx) =>
                 WindowStyle = ProcessWindowStyle.Hidden
             };
 
-            Process? process = Process.Start(psi);
+            Process? npmProcess = Process.Start(psi);
+            SettingsService.Instance.npmProcess = npmProcess;
 
             spa.UseProxyToSpaDevelopmentServer("http://localhost:4200");
         }
@@ -133,4 +128,6 @@ app.UseWhen((ctx) =>
 SettingsService.Instance.FfmpegSettings = config.GetSection("FfmpegSettings").Get<FfmpegSettings>();
 SettingsService.Instance.PopulateGlobalSettings();
 
-app.Run();
+await app.StartAsync();
+
+app.WaitForShutdown();
