@@ -1,0 +1,13 @@
+.pvc-settings-container {
+  margin: auto 20px auto 0;
+  display: flex;
+  flex-direction: row;
+}
+
+.pvc-settings-text {
+  margin: auto 20px;
+}
+
+mat-slider {
+  width: 40%;
+}
