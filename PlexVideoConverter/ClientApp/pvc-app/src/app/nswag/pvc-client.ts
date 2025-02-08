@@ -15,7 +15,261 @@ import { HttpClient, HttpHeaders, HttpResponse, HttpResponseBase } from '@angula
 
 export const API_BASE_URL = new InjectionToken<string>('API_BASE_URL');
 
-@Injectable()
+@Injectable({
+    providedIn: 'root'
+})
+export class FileBrowserApiClient {
+    private http: HttpClient;
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(@Inject(HttpClient) http: HttpClient, @Optional() @Inject(API_BASE_URL) baseUrl?: string) {
+        this.http = http;
+        this.baseUrl = baseUrl ?? "";
+    }
+
+    /**
+     * @param body (optional) 
+     * @return OK
+     */
+    children(body: FileChildrenRequest | undefined): Observable<FileNode[]> {
+        let url_ = this.baseUrl + "/file/children";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processChildren(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processChildren(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<FileNode[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<FileNode[]>;
+        }));
+    }
+
+    protected processChildren(response: HttpResponseBase): Observable<FileNode[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(FileNode.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @return OK
+     */
+    root(): Observable<DriveNode[]> {
+        let url_ = this.baseUrl + "/file/root";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processRoot(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processRoot(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<DriveNode[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<DriveNode[]>;
+        }));
+    }
+
+    protected processRoot(response: HttpResponseBase): Observable<DriveNode[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(DriveNode.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+}
+
+@Injectable({
+    providedIn: 'root'
+})
+export class FolderStatsApiClient {
+    private http: HttpClient;
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(@Inject(HttpClient) http: HttpClient, @Optional() @Inject(API_BASE_URL) baseUrl?: string) {
+        this.http = http;
+        this.baseUrl = baseUrl ?? "";
+    }
+
+    /**
+     * @param body (optional) 
+     * @return OK
+     */
+    workingdir(body: string | undefined): Observable<void> {
+        let url_ = this.baseUrl + "/folder/workingdir";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processWorkingdir(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processWorkingdir(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processWorkingdir(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @return OK
+     */
+    stats(): Observable<FolderStats> {
+        let url_ = this.baseUrl + "/folder/stats";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processStats(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processStats(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<FolderStats>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<FolderStats>;
+        }));
+    }
+
+    protected processStats(response: HttpResponseBase): Observable<FolderStats> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = FolderStats.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+}
+
+@Injectable({
+    providedIn: 'root'
+})
 export class PvcApiClient {
     private http: HttpClient;
     private baseUrl: string;
@@ -143,7 +397,9 @@ export class PvcApiClient {
     }
 }
 
-@Injectable()
+@Injectable({
+    providedIn: 'root'
+})
 export class PvcSettingsApiClient {
     private http: HttpClient;
     private baseUrl: string;
@@ -258,6 +514,46 @@ export class PvcSettingsApiClient {
     }
 }
 
+export class DriveNode implements IDriveNode {
+    driveLetter?: string | undefined;
+    drivePath?: string | undefined;
+
+    constructor(data?: IDriveNode) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.driveLetter = _data["driveLetter"];
+            this.drivePath = _data["drivePath"];
+        }
+    }
+
+    static fromJS(data: any): DriveNode {
+        data = typeof data === 'object' ? data : {};
+        let result = new DriveNode();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["driveLetter"] = this.driveLetter;
+        data["drivePath"] = this.drivePath;
+        return data;
+    }
+}
+
+export interface IDriveNode {
+    driveLetter?: string | undefined;
+    drivePath?: string | undefined;
+}
+
 export class FfmpegSettings implements IFfmpegSettings {
     videoQuality?: number;
     reportPercentProgress?: number;
@@ -300,6 +596,50 @@ export interface IFfmpegSettings {
     videoQuality?: number;
     reportPercentProgress?: number;
     ffmpegSettingsLocation?: string | undefined;
+}
+
+export class FileChildrenRequest implements IFileChildrenRequest {
+    path?: string | undefined;
+    includeFiles?: boolean;
+    includeDirectories?: boolean;
+
+    constructor(data?: IFileChildrenRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.path = _data["path"];
+            this.includeFiles = _data["includeFiles"];
+            this.includeDirectories = _data["includeDirectories"];
+        }
+    }
+
+    static fromJS(data: any): FileChildrenRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new FileChildrenRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["path"] = this.path;
+        data["includeFiles"] = this.includeFiles;
+        data["includeDirectories"] = this.includeDirectories;
+        return data;
+    }
+}
+
+export interface IFileChildrenRequest {
+    path?: string | undefined;
+    includeFiles?: boolean;
+    includeDirectories?: boolean;
 }
 
 export class FileListenerSettings implements IFileListenerSettings {
@@ -370,6 +710,54 @@ export interface IFileListenerSettings {
     executableArguments?: string | undefined;
 }
 
+export class FileNode implements IFileNode {
+    name?: string | undefined;
+    path?: string | undefined;
+    isDirectory?: boolean;
+    hasChildren?: boolean;
+
+    constructor(data?: IFileNode) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.name = _data["name"];
+            this.path = _data["path"];
+            this.isDirectory = _data["isDirectory"];
+            this.hasChildren = _data["hasChildren"];
+        }
+    }
+
+    static fromJS(data: any): FileNode {
+        data = typeof data === 'object' ? data : {};
+        let result = new FileNode();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["name"] = this.name;
+        data["path"] = this.path;
+        data["isDirectory"] = this.isDirectory;
+        data["hasChildren"] = this.hasChildren;
+        return data;
+    }
+}
+
+export interface IFileNode {
+    name?: string | undefined;
+    path?: string | undefined;
+    isDirectory?: boolean;
+    hasChildren?: boolean;
+}
+
 export class FileProcess implements IFileProcess {
     id?: string;
     filePath?: string | undefined;
@@ -420,6 +808,62 @@ export interface IFileProcess {
     progress?: number;
     inputName?: string | undefined;
     outputName?: string | undefined;
+}
+
+export class FolderStats implements IFolderStats {
+    fullPath?: string | undefined;
+    sizeGB?: string | undefined;
+    h264FileNames?: string[] | undefined;
+    possibleSavings?: string | undefined;
+
+    constructor(data?: IFolderStats) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.fullPath = _data["fullPath"];
+            this.sizeGB = _data["sizeGB"];
+            if (Array.isArray(_data["h264FileNames"])) {
+                this.h264FileNames = [] as any;
+                for (let item of _data["h264FileNames"])
+                    this.h264FileNames!.push(item);
+            }
+            this.possibleSavings = _data["possibleSavings"];
+        }
+    }
+
+    static fromJS(data: any): FolderStats {
+        data = typeof data === 'object' ? data : {};
+        let result = new FolderStats();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["fullPath"] = this.fullPath;
+        data["sizeGB"] = this.sizeGB;
+        if (Array.isArray(this.h264FileNames)) {
+            data["h264FileNames"] = [];
+            for (let item of this.h264FileNames)
+                data["h264FileNames"].push(item);
+        }
+        data["possibleSavings"] = this.possibleSavings;
+        return data;
+    }
+}
+
+export interface IFolderStats {
+    fullPath?: string | undefined;
+    sizeGB?: string | undefined;
+    h264FileNames?: string[] | undefined;
+    possibleSavings?: string | undefined;
 }
 
 export class ApiException extends Error {

@@ -1,0 +1,58 @@
+<mat-card style="max-width: 800px" appearance="outlined">
+  <mat-card-header>
+    <mat-card-title>
+      <div style="display: flex; flex-direction: row; min-width: 600px">
+        <button style="flex: .5; margin: auto 15px auto 5px" mat-mini-fab [disabled]="fbStore.fullBrowsingPath().length < 2" (click)="goUpNode()">
+          <mat-icon fontIcon="publish"/>
+        </button>
+        <div style="flex: 2.5; margin-right: 10px">
+          <mat-button-toggle-group (change)="changeRootDrive($event)">
+            @for (drive of fbStore.driveList(); track drive) {
+              <mat-button-toggle [value]="drive">{{drive.drivePath}}</mat-button-toggle>
+            }
+          </mat-button-toggle-group>
+        </div>
+        <span style="margin: auto; flex: 1.25">Path:</span>
+        <span style="margin: auto; flex: 3">
+          <mat-chip>
+            {{fbStore.browsingPathString()}}
+          </mat-chip>
+        </span>
+      </div>
+    </mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    <div>
+      Folders List:
+      <mat-chip-set>
+        @for (node of fbStore.childNodes(); track node) {
+          <ng-container *ngIf="node.isDirectory">
+            <mat-chip (click)="selectNode(node)">
+              <div style="display: flex; flex-direction: row">
+                <mat-icon fontIcon="folder"/>
+                <div style="margin: auto;">{{node.name}}</div>
+              </div>
+            </mat-chip>
+          </ng-container>
+        }
+      </mat-chip-set>
+    </div>
+    <div>
+      Files List:
+      <mat-chip-set>
+        @for (node of fbStore.childNodes(); track node) {
+          <ng-container *ngIf="!node.isDirectory">
+            <mat-chip>
+              <div style="display: flex; flex-direction: row">
+                <mat-icon fontIcon="description"/>
+                <div style="margin: auto;">{{node.name}}</div>
+              </div>
+            </mat-chip>
+          </ng-container>
+        }
+      </mat-chip-set>
+    </div>
+    <button mat-flat-button [disabled]="fbStore.fullBrowsingPath().length < 1" (click)="setWorkingDirectory()">Select Working Directory</button>
+  </mat-card-content>
+</mat-card>
+
