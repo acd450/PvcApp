@@ -1,8 +1,7 @@
-import {Component} from '@angular/core';
-import {CommonModule} from '@angular/common';
+import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { MatCard, MatCardContent, MatCardHeader, MatCardModule } from '@angular/material/card';
-import { MatIcon } from '@angular/material/icon';
-import { MatMiniFabButton } from '@angular/material/button';
+import { FileBrowserComponent } from '../file-browser/file-browser.component';
 
 @Component({
   selector: 'pvc-home',
@@ -12,8 +11,7 @@ import { MatMiniFabButton } from '@angular/material/button';
     MatCard,
     MatCardHeader,
     MatCardContent,
-    MatIcon,
-    MatMiniFabButton,
+    FileBrowserComponent,
   ],
   templateUrl: './pvc-home.component.html',
   styleUrl: './pvc-home.component.css'

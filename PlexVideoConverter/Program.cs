@@ -111,7 +111,7 @@ app.UseWhen((ctx) =>
                 Arguments = "start",
                 WorkingDirectory = angularProjectPath,
                 UseShellExecute = true,
-                WindowStyle = ProcessWindowStyle.Hidden
+                WindowStyle = ProcessWindowStyle.Minimized
             };
 
             Process? npmProcess = Process.Start(psi);
