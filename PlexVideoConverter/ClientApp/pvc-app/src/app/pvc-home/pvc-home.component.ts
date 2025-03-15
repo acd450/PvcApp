@@ -1,7 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCard, MatCardContent, MatCardHeader, MatCardModule } from '@angular/material/card';
 import { FileBrowserComponent } from '../file-browser/file-browser.component';
+import { PvcAppStore } from '../store/pvc-app.signal.store';
+import { PvcStatsComponent } from './pvc-stats.component';
+import { PvcGaugeComponent } from './pvc-gauge.component';
 
 @Component({
   selector: 'pvc-home',
@@ -12,32 +15,22 @@ import { FileBrowserComponent } from '../file-browser/file-browser.component';
     MatCardHeader,
     MatCardContent,
     FileBrowserComponent,
+    PvcStatsComponent,
+    PvcGaugeComponent,
   ],
   templateUrl: './pvc-home.component.html',
   styleUrl: './pvc-home.component.css'
 })
 export class PvcHomeComponent {
 
+  pvcAppStore = inject(PvcAppStore);
+
   folderName = '';
   constructor() {
   }
 
-  onFolderSelected(event: Event) {
-
-    const folderName = event;
-    console.log(folderName);
-
-    // if (file) {
-    //
-    //   this.fileName = file.name;
-    //
-    //   const formData = new FormData();
-    //
-    //   formData.append("thumbnail", file);
-    //
-    //   const upload$ = this.http.post("/api/thumbnail-upload", formData);
-    //
-    //   upload$.subscribe();
-    // }
+  checkNewWorkingDirectory() {
+    console.log('checkNewWorkingDirectory()');
+    this.pvcAppStore.getWorkingDirectory();
   }
 }

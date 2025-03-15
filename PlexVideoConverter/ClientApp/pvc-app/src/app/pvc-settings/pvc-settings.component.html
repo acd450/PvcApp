@@ -10,10 +10,12 @@
           <input matSliderThumb formControlName="videoQuality">
         </mat-slider>
         <div class="pvc-settings-text">{{videoQualityControl.value}} CRF</div>
+        <mat-icon style="margin: auto 5px" matTooltip="0 is lossless quality"
+                  matTooltipPosition="below">info</mat-icon>
       </div>
       <div class="pvc-settings-container">
         <div class="pvc-settings-text">Log Out Every: </div>
-        <mat-slider min="1" max="50" step="1">
+        <mat-slider min="0" max="50" step="1">
           <input matSliderThumb formControlName="reportPercentProgress">
         </mat-slider>
         <div class="pvc-settings-text"> {{reportPercentProgressControl.value}} %</div>

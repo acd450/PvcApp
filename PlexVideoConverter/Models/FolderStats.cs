@@ -11,7 +11,7 @@ public class FolderStats
 public class FileStats
 {
     public string FullPath { get; set; }
-    public double SizeMB { get; set; }
+    public double SizeGB { get; set; }
     public bool IsH264File { get; set; }
-    public double PossibleMBSavings { get; set; }
+    public double PossibleGBSavings { get; set; }
 }

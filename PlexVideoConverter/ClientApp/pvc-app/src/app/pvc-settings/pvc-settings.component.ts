@@ -5,6 +5,8 @@ import { FfmpegSettings, PvcSettingsApiClient } from "../nswag/pvc-client";
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { MatSlider, MatSliderThumb } from '@angular/material/slider';
 import { MatButton } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
+import { MatTooltip } from '@angular/material/tooltip';
 
 @Component({
   selector: 'app-pvc-settings',
@@ -18,6 +20,8 @@ import { MatButton } from '@angular/material/button';
     MatSlider,
     MatSliderThumb,
     MatButton,
+    MatIcon,
+    MatTooltip,
   ],
   providers: [
     PvcSettingsApiClient

@@ -20,6 +20,9 @@
         </span>
       </div>
     </mat-card-title>
+    <mat-card-subtitle>
+      <button mat-flat-button [disabled]="fbStore.fullBrowsingPath().length < 1" (click)="setWorkingDirectory()">Select Working Directory</button>
+    </mat-card-subtitle>
   </mat-card-header>
   <mat-card-content>
     <div>
@@ -52,7 +55,6 @@
         }
       </mat-chip-set>
     </div>
-    <button mat-flat-button [disabled]="fbStore.fullBrowsingPath().length < 1" (click)="setWorkingDirectory()">Select Working Directory</button>
   </mat-card-content>
 </mat-card>
 

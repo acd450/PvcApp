@@ -164,10 +164,61 @@ export class FolderStatsApiClient {
     }
 
     /**
+     * @return OK
+     */
+    workingdirGET(): Observable<WorkingDirectoryResponse> {
+        let url_ = this.baseUrl + "/folder/workingdir";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processWorkingdirGET(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processWorkingdirGET(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<WorkingDirectoryResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<WorkingDirectoryResponse>;
+        }));
+    }
+
+    protected processWorkingdirGET(response: HttpResponseBase): Observable<WorkingDirectoryResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = WorkingDirectoryResponse.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
      * @param body (optional) 
      * @return OK
      */
-    workingdir(body: string | undefined): Observable<void> {
+    workingdirPOST(body: string | undefined): Observable<void> {
         let url_ = this.baseUrl + "/folder/workingdir";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -183,11 +234,11 @@ export class FolderStatsApiClient {
         };
 
         return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processWorkingdir(response_);
+            return this.processWorkingdirPOST(response_);
         })).pipe(_observableCatch((response_: any) => {
             if (response_ instanceof HttpResponseBase) {
                 try {
-                    return this.processWorkingdir(response_ as any);
+                    return this.processWorkingdirPOST(response_ as any);
                 } catch (e) {
                     return _observableThrow(e) as any as Observable<void>;
                 }
@@ -196,7 +247,7 @@ export class FolderStatsApiClient {
         }));
     }
 
-    protected processWorkingdir(response: HttpResponseBase): Observable<void> {
+    protected processWorkingdirPOST(response: HttpResponseBase): Observable<void> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -864,6 +915,42 @@ export interface IFolderStats {
     sizeGB?: string | undefined;
     h264FileNames?: string[] | undefined;
     possibleSavings?: string | undefined;
+}
+
+export class WorkingDirectoryResponse implements IWorkingDirectoryResponse {
+    workingDirectory?: string | undefined;
+
+    constructor(data?: IWorkingDirectoryResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.workingDirectory = _data["workingDirectory"];
+        }
+    }
+
+    static fromJS(data: any): WorkingDirectoryResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new WorkingDirectoryResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["workingDirectory"] = this.workingDirectory;
+        return data;
+    }
+}
+
+export interface IWorkingDirectoryResponse {
+    workingDirectory?: string | undefined;
 }
 
 export class ApiException extends Error {
