@@ -1,8 +1,9 @@
-import { Component, computed, inject, OnInit, ViewChild } from '@angular/core';
+import {Component, computed, effect, inject, OnInit, ViewChild} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { PvcAppStore } from '../store/pvc-app.signal.store';
 import {
+  ApexAxisChartSeries,
   ApexChart,
   ApexLegend,
   ApexNonAxisChartSeries,
@@ -32,23 +33,23 @@ export type ChartOptions = {
   styleUrl: './pvc-home.component.css',
   template: `
     <mat-card class="example-card" appearance="outlined" style="max-width: 450px">
-    <mat-card-header>
-      <mat-card-title>Free Space Card</mat-card-title>
-      <mat-card-subtitle>Space could be saved</mat-card-subtitle>
-    </mat-card-header>
-    <mat-card-content>
-      <div id="chart">
-        <apx-chart
-          [series]="chartOptions.series"
-          [chart]="chartOptions.chart"
-          [plotOptions]="chartOptions.plotOptions"
-          [labels]="chartOptions.labels"
-          [legend]="chartOptions.legend"
-          [colors]="chartOptions.colors"
-          [responsive]="chartOptions.responsive"
-        ></apx-chart>
-      </div>
-    </mat-card-content>
+      <mat-card-header>
+        <mat-card-title>Storage Stats</mat-card-title>
+        <mat-card-subtitle>Space could be saved</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div id="chart">
+          <apx-chart
+            [series]="this._statsSeries"
+            [chart]="chartOptions.chart"
+            [plotOptions]="chartOptions.plotOptions"
+            [labels]="chartOptions.labels"
+            [legend]="chartOptions.legend"
+            [colors]="chartOptions.colors"
+            [responsive]="chartOptions.responsive"
+          ></apx-chart>
+        </div>
+      </mat-card-content>
     </mat-card>
   `
 })
@@ -62,11 +63,26 @@ export class PvcGaugeComponent implements OnInit {
     return this.pvcAppStore.wdStats()
   });
 
+  _statsSeries: ApexNonAxisChartSeries = [];
+  folderStats = effect(() =>{
+    let totalSize = this._wdStats().sizeGB;
+    if (!totalSize) totalSize = "0";
+    let totalSavings = this._wdStats().possibleSavings;
+    if (!totalSavings) totalSavings = "0";
+    console.log('folderStats updated, totalSize: ' + totalSize + ', totalSavings: ' + totalSavings);
+    this._statsSeries = [100, +((+totalSize - +totalSavings)/+totalSize*100).toFixed(3)];
+    this.chartOptions = this.calcChartOpts(+totalSize);
+  })
+
   folderName = '';
   constructor() {
+    this.chartOptions = this.calcChartOpts();
+  }
 
-    this.chartOptions = {
-      series: [100, 67],
+  calcChartOpts(totalSize = 1): ChartOptions {
+
+    return {
+      series: [],
       chart: {
         height: 390,
         type: "radialBar"
@@ -105,7 +121,8 @@ export class PvcGaugeComponent implements OnInit {
           useSeriesColors: true
         },
         formatter: function(seriesName, opts) {
-          return seriesName + ":  " + opts.w.globals.series[opts.seriesIndex];
+          return " " + seriesName + ":  " +
+            ((opts.w.globals.series[opts.seriesIndex]/100 * totalSize).toFixed(3)) + " GB";
         },
         itemMargin: {
           horizontal: 3
@@ -122,7 +139,6 @@ export class PvcGaugeComponent implements OnInit {
         }
       ]
     };
-
   }
 
   ngOnInit() {

@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.Globalization;
+using System.Text.Json;
 using FFMpegCore;
 using NLog;
 using PlexVideoConverter.Models;
@@ -55,9 +56,9 @@ public class FolderStatsService
         var stats = new FolderStats
         {
             FullPath = WorkingDirectory,
-            SizeGB = Math.Round(totalSize, 3) + "GB",
+            SizeGB = Math.Round(totalSize, 3).ToString(),
             H264FileNames = statsList.Where(s => s.IsH264File).Select(s => s.FullPath).ToList(),
-            PossibleSavings = Math.Round(totalSavings, 3) + "GB",
+            PossibleSavings = Math.Round(totalSavings, 3).ToString(),
         };
         
         return stats;
