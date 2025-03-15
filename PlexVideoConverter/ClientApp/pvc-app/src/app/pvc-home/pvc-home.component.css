@@ -1,0 +1,10 @@
+.pvc-thin-card {
+  max-width: 450px;
+  min-width: 400px;
+  margin: 10px;
+}
+
+.pvc-thick-card {
+  max-width: 700px;
+  margin: 10px;
+}

@@ -60,7 +60,7 @@ export const FileBrowserStore = signalStore(
         pipe(
           debounceTime(300),
           switchMap(() => {
-            return fssClient.workingdir(store.fullBrowsingPath()[store.fullBrowsingPath().length-1].path).pipe(
+            return fssClient.workingdirPOST(store.fullBrowsingPath()[store.fullBrowsingPath().length-1].path).pipe(
               tapResponse({
                 next: (resp) => console.log("Set Working Directory."),
                 error: console.error

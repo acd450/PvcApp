@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, EventEmitter, inject, Output } from '@angular/core';
 import { DriveNode, FileChildrenRequest, FileNode } from '../nswag/pvc-client';
 import { FileBrowserStore } from '../store/file-browser.signal.store';
 import {
@@ -28,6 +28,8 @@ import { MatCardModule } from '@angular/material/card';
 })
 export class FileBrowserComponent {
   fbStore = inject(FileBrowserStore);
+
+  @Output() workingDirectoryChange = new EventEmitter();
 
   constructor() {
     this.fbStore.getRootDrives();
@@ -63,6 +65,7 @@ export class FileBrowserComponent {
 
   setWorkingDirectory() {
     this.fbStore.setWorkingDirectory();
+    this.workingDirectoryChange.emit();
   }
 
 }
