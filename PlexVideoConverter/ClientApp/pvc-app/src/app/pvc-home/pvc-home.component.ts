@@ -5,6 +5,7 @@ import { FileBrowserComponent } from '../file-browser/file-browser.component';
 import { PvcAppStore } from '../store/pvc-app.signal.store';
 import { PvcStatsComponent } from './pvc-stats.component';
 import { PvcGaugeComponent } from './pvc-gauge.component';
+import {PvcVideoListComponent} from './pvc-videoList.component';
 
 @Component({
   selector: 'pvc-home',
@@ -17,6 +18,7 @@ import { PvcGaugeComponent } from './pvc-gauge.component';
     FileBrowserComponent,
     PvcStatsComponent,
     PvcGaugeComponent,
+    PvcVideoListComponent,
   ],
   templateUrl: './pvc-home.component.html',
   styleUrl: './pvc-home.component.css'

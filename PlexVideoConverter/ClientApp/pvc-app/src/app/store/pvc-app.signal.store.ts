@@ -1,6 +1,6 @@
 import { FolderStats, FolderStatsApiClient } from '../nswag/pvc-client';
-import { patchState, signalStore, withMethods, withState } from '@ngrx/signals';
-import { inject } from '@angular/core';
+import {patchState, signalStore, withComputed, withMethods, withState} from '@ngrx/signals';
+import {computed, inject} from '@angular/core';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { debounceTime, pipe, switchMap } from 'rxjs';
 import { tapResponse } from '@ngrx/operators';
@@ -18,7 +18,21 @@ export const initialState: PvcAppState = {
 export const PvcAppStore = signalStore(
   {providedIn: 'root'},
   withState(initialState),
-  //withComputed(({workingDirectory}) => ({})),
+  withComputed(({wdStats}) => ({
+    videoList: computed(() => {
+      return wdStats().h264FileNames ?? [];
+    }),
+    videoTable: computed(() => {
+      let data = wdStats().h264FileNames ?? [];
+      return data.map(f => {
+        return {
+          fileName: f.fileName,
+          sizeGB: f.sizeGB?.toFixed(3) + " GB",
+          h265Size: (+(f.sizeGB ?? 0) - +(f.possibleGBSavings ?? 0)).toFixed(3) + " GB",
+        }
+      });
+    })
+  })),
   withMethods((store,
                fssClient = inject(FolderStatsApiClient)) => ({
     getWorkingDirectory: rxMethod<void>(

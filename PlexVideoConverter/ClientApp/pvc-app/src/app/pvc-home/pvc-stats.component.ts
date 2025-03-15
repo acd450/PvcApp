@@ -12,10 +12,8 @@ import { PvcAppStore } from '../store/pvc-app.signal.store';
   styleUrl: './pvc-home.component.css',
   template: `
     <div *ngIf="pvcAppStore.wdStats() as stats">
-      stats: {{stats}}
       <div>fullPath: {{stats.fullPath}}</div>
       <div>sizeGB: {{stats.sizeGB}}</div>
-      <div>h264FileNames: {{stats.h264FileNames}}</div>
       <div>possibleSavings: {{stats.possibleSavings}}</div>
     </div>
   `

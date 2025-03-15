@@ -40,6 +40,7 @@ public class FolderStatsService
             var isH264 = probe.PrimaryVideoStream?.CodecName.ToUpper() == "H264";
             var videoStats = new FileStats
             {
+                FileName = videoFile.Name,
                 FullPath = videoFile.FullName,
                 IsH264File = isH264,
                 SizeGB = fileSizeGB,
@@ -57,7 +58,7 @@ public class FolderStatsService
         {
             FullPath = WorkingDirectory,
             SizeGB = Math.Round(totalSize, 3).ToString(),
-            H264FileNames = statsList.Where(s => s.IsH264File).Select(s => s.FullPath).ToList(),
+            H264FileNames = statsList.Where(s => s.IsH264File).ToList(),
             PossibleSavings = Math.Round(totalSavings, 3).ToString(),
         };
         

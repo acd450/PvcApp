@@ -32,10 +32,10 @@ export type ChartOptions = {
   ],
   styleUrl: './pvc-home.component.css',
   template: `
-    <mat-card class="example-card" appearance="outlined" style="max-width: 450px">
+    <mat-card class="pvc-thin-card" appearance="outlined">
       <mat-card-header>
         <mat-card-title>Storage Stats</mat-card-title>
-        <mat-card-subtitle>Space could be saved</mat-card-subtitle>
+        <mat-card-subtitle>{{pvcAppStore.workingDirectory()}}</mat-card-subtitle>
       </mat-card-header>
       <mat-card-content>
         <div id="chart">
