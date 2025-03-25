@@ -6,6 +6,7 @@ import { PvcAppStore } from '../store/pvc-app.signal.store';
 import { PvcStatsComponent } from './pvc-stats.component';
 import { PvcGaugeComponent } from './pvc-gauge.component';
 import {PvcVideoListComponent} from './pvc-videoList.component';
+import {MatButton} from '@angular/material/button';
 
 @Component({
   selector: 'pvc-home',
@@ -19,6 +20,7 @@ import {PvcVideoListComponent} from './pvc-videoList.component';
     PvcStatsComponent,
     PvcGaugeComponent,
     PvcVideoListComponent,
+    MatButton,
   ],
   templateUrl: './pvc-home.component.html',
   styleUrl: './pvc-home.component.css'
@@ -34,5 +36,10 @@ export class PvcHomeComponent {
   checkNewWorkingDirectory() {
     console.log('checkNewWorkingDirectory()');
     this.pvcAppStore.getWorkingDirectory();
+  }
+
+  resetWorkspace() {
+    console.log('resetWorkspace()');
+    this.pvcAppStore.resetWorkspace();
   }
 }

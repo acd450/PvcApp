@@ -2,13 +2,16 @@
   <mat-card-header>
     <mat-card-title>
       <div style="display: flex; flex-direction: row; min-width: 600px">
-        <button style="flex: .5; margin: auto 15px auto 5px" mat-mini-fab [disabled]="fbStore.fullBrowsingPath().length < 2" (click)="goUpNode()">
+        <button style="flex: .5; margin: auto 15px auto 5px; padding: 0 10px" mat-mini-fab
+                [disabled]="fbStore.fullBrowsingPath().length < 2" (click)="goUpNode()">
           <mat-icon fontIcon="publish"/>
         </button>
         <div style="flex: 2.5; margin-right: 10px">
           <mat-button-toggle-group (change)="changeRootDrive($event)">
             @for (drive of fbStore.driveList(); track drive) {
-              <mat-button-toggle [value]="drive">{{drive.drivePath}}</mat-button-toggle>
+              <mat-button-toggle style="min-width: 75px" [value]="drive">
+                {{drive.drivePath}}
+              </mat-button-toggle>
             }
           </mat-button-toggle-group>
         </div>
@@ -20,8 +23,11 @@
         </span>
       </div>
     </mat-card-title>
-    <mat-card-subtitle>
-      <button mat-flat-button [disabled]="fbStore.fullBrowsingPath().length < 1" (click)="setWorkingDirectory()">Select Working Directory</button>
+    <mat-card-subtitle style="margin: 10px 5px">
+      <button mat-flat-button [disabled]="fbStore.fullBrowsingPath().length < 1"
+              (click)="setWorkingDirectory()">
+        Select Working Directory
+      </button>
     </mat-card-subtitle>
   </mat-card-header>
   <mat-card-content>

@@ -13,7 +13,10 @@
       <mat-card-title>Working Directory Stats</mat-card-title>
     </mat-card-header>
     <mat-card-content>
-      <pvc-stats></pvc-stats>
+        <div style="display: flex; flex-direction: row; justify-content: space-around">
+            <pvc-stats></pvc-stats>
+            <button mat-flat-button (click)="resetWorkspace()">Change Workspace</button>
+        </div>
     </mat-card-content>
   </mat-card>
   <div style="display: flex; flex-direction: row; justify-content: space-around">

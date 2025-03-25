@@ -65,5 +65,8 @@ export const PvcAppStore = signalStore(
         })
       )
     ),
+    resetWorkspace(): void {
+      patchState(store, {workingDirectory: '', wdStats: new FolderStats()});
+    }
   })),
 );
