@@ -5,11 +5,15 @@ using NLog.Extensions.Logging;
 using NLog.Web;
 using PlexVideoConverter.Models;
 using PlexVideoConverter.Services;
+using PlexVideoConverter.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
+
+// Add SignalR
+builder.Services.AddSignalR();
 
 builder.Services.AddSpaStaticFiles(configuration =>
 {
@@ -74,6 +78,7 @@ app.UseCors(corsBuilder =>
 app.UseRouting();
 
 app.MapControllers();
+app.MapHub<PvcConversionHub>("/pvcConversionHub");
 
 app.UseMvc(routes =>
 {

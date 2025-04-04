@@ -1,6 +1,7 @@
 ﻿using FFMpegCore;
 using FFMpegCore.Enums;
 using NLog;
+using PlexVideoConverter.Hubs;
 using PlexVideoConverter.Models;
 
 namespace PlexVideoConverter.Services;
@@ -14,8 +15,8 @@ public class FfmpegCoreService
 
     private SemaphoreSlim sem;
     
-    public Dictionary<Guid, FileProcess> FileProcesses { get; set; } = new();
-    public Dictionary<Guid, FileProcess> CompletedFileProcesses { get; set; } = new();
+    public Dictionary<Guid, ConversionProcess> FileProcesses { get; set; } = new();
+    public Dictionary<Guid, ConversionProcess> CompletedFileProcesses { get; set; } = new();
 
     public FfmpegCoreService()
     {
@@ -45,30 +46,7 @@ public class FfmpegCoreService
         }
     }
 
-    public async void AddItems(FileProcess fp)
-    {
-        FileProcesses.Add(fp.Id, fp);
-        await Instance.Enqueue(() => Instance.ConvertVideoAsync(ref fp));
-        
-        Instance.CompleteFileConversion(fp);
-    }
-    
-    public async Task Enqueue(Func<Task> taskGenerator)
-    {
-        await sem.WaitAsync();
-        try
-        {
-            logger.Info("Tasked started...");
-            await taskGenerator();
-        }
-        finally
-        {
-            logger.Info("Task finished processing...");
-            sem.Release();
-        }
-    }
-
-    private Task ConvertVideoAsync(ref FileProcess fp)
+    public Task ConvertVideoAsync(ref ConversionProcess fp)
     {
         try
         {
@@ -102,11 +80,11 @@ public class FfmpegCoreService
                 //Update current progress
                 FileProcesses[fpId].Progress = p;
                 //Only log when the percent exceeds the reportPercentCompletion
-                if (percentTracker < p / reportPercentProgress)
-                {
-                    logger.Info("Current Video Progress: " + p + "%");
-                    percentTracker = (int)Math.Ceiling(p / reportPercentProgress);
-                }
+                if (!(percentTracker < p / reportPercentProgress)) return;
+                
+                logger.Info("Current Video Progress: " + p + "%");
+                PvcConversionClient.Instance.SendConversionProgressUpdate(fpId, (int)p);
+                percentTracker = (int)Math.Ceiling(p / reportPercentProgress);
             }
         }
         catch (Exception ex)
@@ -120,7 +98,7 @@ public class FfmpegCoreService
     /// Anything to run after the video conversion is complete. Currently moves files to a 
     /// </summary>
     /// <param name="fullPathFile"></param>
-    public void CompleteFileConversion(FileProcess fp)
+    public void CompleteFileConversion(ConversionProcess fp)
     {
         var fileName = fp.FilePath.Substring(fp.FilePath.LastIndexOf("\\", StringComparison.Ordinal),
             fp.FilePath.Length - fp.FilePath.LastIndexOf("\\", StringComparison.Ordinal));
