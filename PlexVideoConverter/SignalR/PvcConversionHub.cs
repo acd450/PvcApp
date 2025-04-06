@@ -10,7 +10,7 @@ namespace PlexVideoConverter.Hubs;
 /// </summary>
 public class PvcConversionHub : Hub
 {
-    public async Task QueueConversion(List<FileNode> nodesToQueue)
+    public async Task EnqueueConversion(List<FileStats> nodesToQueue)
     {
         //await Clients.All.SendAsync("UpdateQueue", msg);
         nodesToQueue.ForEach(ntq =>
@@ -18,7 +18,7 @@ public class PvcConversionHub : Hub
             ConversionQueueService.Instance.AddItems(new ConversionProcess(ntq));
         });
     }
-    public async Task DequeueConversion(List<FileNode> nodesToDequeue)
+    public async Task DequeueConversion(List<FileStats> nodesToDequeue)
     {
         //await Clients.All.SendAsync("UpdateQueue", msg);
         ConversionQueueService.Instance.RemoveItem(nodesToDequeue);

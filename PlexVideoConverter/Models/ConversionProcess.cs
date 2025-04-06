@@ -35,15 +35,15 @@ public class ConversionProcess
             .Replace(".mp4", ".mkv").Replace(".avi", ".mkv");
     }
 
-    public ConversionProcess(FileNode node)
+    public ConversionProcess(FileStats file)
     {
         Id = Guid.NewGuid();
-        FilePath = node.Path;
+        FilePath = file.FullPath;
         Progress = 0;
-        InputName = node.Name;
+        InputName = file.FileName;
         OutputName = InputName.Substring(InputName.LastIndexOf("\\", StringComparison.Ordinal),
                 InputName.Length - InputName.LastIndexOf("\\", StringComparison.Ordinal))
             .Replace(".mp4", ".mkv").Replace(".avi", ".mkv");
-        InputSizeGB = ((double)(File.Open(node.Path + node.Name, FileMode.Open).Length >> 20)/1024).ToString();
+        InputSizeGB = ((double)(File.Open(file.FullPath + file.FileName, FileMode.Open).Length >> 20)/1024).ToString();
     }
 }

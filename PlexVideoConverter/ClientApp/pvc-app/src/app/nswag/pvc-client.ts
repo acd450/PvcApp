@@ -334,7 +334,7 @@ export class PvcApiClient {
     /**
      * @return OK
      */
-    queued(): Observable<FileProcess[]> {
+    queued(): Observable<ConversionProcess[]> {
         let url_ = this.baseUrl + "/files/queued";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -353,14 +353,14 @@ export class PvcApiClient {
                 try {
                     return this.processQueued(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<FileProcess[]>;
+                    return _observableThrow(e) as any as Observable<ConversionProcess[]>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<FileProcess[]>;
+                return _observableThrow(response_) as any as Observable<ConversionProcess[]>;
         }));
     }
 
-    protected processQueued(response: HttpResponseBase): Observable<FileProcess[]> {
+    protected processQueued(response: HttpResponseBase): Observable<ConversionProcess[]> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -374,7 +374,7 @@ export class PvcApiClient {
             if (Array.isArray(resultData200)) {
                 result200 = [] as any;
                 for (let item of resultData200)
-                    result200!.push(FileProcess.fromJS(item));
+                    result200!.push(ConversionProcess.fromJS(item));
             }
             else {
                 result200 = <any>null;
@@ -563,6 +563,66 @@ export class PvcSettingsApiClient {
         }
         return _observableOf(null as any);
     }
+}
+
+export class ConversionProcess implements IConversionProcess {
+    id?: string;
+    filePath?: string | undefined;
+    progress?: number;
+    inputName?: string | undefined;
+    outputName?: string | undefined;
+    inputSizeGB?: string | undefined;
+    outputSizeGB?: string | undefined;
+
+    constructor(data?: IConversionProcess) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.filePath = _data["filePath"];
+            this.progress = _data["progress"];
+            this.inputName = _data["inputName"];
+            this.outputName = _data["outputName"];
+            this.inputSizeGB = _data["inputSizeGB"];
+            this.outputSizeGB = _data["outputSizeGB"];
+        }
+    }
+
+    static fromJS(data: any): ConversionProcess {
+        data = typeof data === 'object' ? data : {};
+        let result = new ConversionProcess();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["filePath"] = this.filePath;
+        data["progress"] = this.progress;
+        data["inputName"] = this.inputName;
+        data["outputName"] = this.outputName;
+        data["inputSizeGB"] = this.inputSizeGB;
+        data["outputSizeGB"] = this.outputSizeGB;
+        return data;
+    }
+}
+
+export interface IConversionProcess {
+    id?: string;
+    filePath?: string | undefined;
+    progress?: number;
+    inputName?: string | undefined;
+    outputName?: string | undefined;
+    inputSizeGB?: string | undefined;
+    outputSizeGB?: string | undefined;
 }
 
 export class DriveNode implements IDriveNode {
@@ -809,58 +869,6 @@ export interface IFileNode {
     hasChildren?: boolean;
 }
 
-export class FileProcess implements IFileProcess {
-    id?: string;
-    filePath?: string | undefined;
-    progress?: number;
-    inputName?: string | undefined;
-    outputName?: string | undefined;
-
-    constructor(data?: IFileProcess) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.id = _data["id"];
-            this.filePath = _data["filePath"];
-            this.progress = _data["progress"];
-            this.inputName = _data["inputName"];
-            this.outputName = _data["outputName"];
-        }
-    }
-
-    static fromJS(data: any): FileProcess {
-        data = typeof data === 'object' ? data : {};
-        let result = new FileProcess();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["id"] = this.id;
-        data["filePath"] = this.filePath;
-        data["progress"] = this.progress;
-        data["inputName"] = this.inputName;
-        data["outputName"] = this.outputName;
-        return data;
-    }
-}
-
-export interface IFileProcess {
-    id?: string;
-    filePath?: string | undefined;
-    progress?: number;
-    inputName?: string | undefined;
-    outputName?: string | undefined;
-}
-
 export class FileStats implements IFileStats {
     fileName?: string | undefined;
     fullPath?: string | undefined;
@@ -967,6 +975,74 @@ export interface IFolderStats {
     sizeGB?: string | undefined;
     h264FileNames?: FileStats[] | undefined;
     possibleSavings?: string | undefined;
+}
+
+export class QueueStatusArgs implements IQueueStatusArgs {
+    queuedProcesses?: ConversionProcess[] | undefined;
+    activeProcesses?: ConversionProcess[] | undefined;
+    completedProcesses?: ConversionProcess[] | undefined;
+
+    constructor(data?: IQueueStatusArgs) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["queuedProcesses"])) {
+                this.queuedProcesses = [] as any;
+                for (let item of _data["queuedProcesses"])
+                    this.queuedProcesses!.push(ConversionProcess.fromJS(item));
+            }
+            if (Array.isArray(_data["activeProcesses"])) {
+                this.activeProcesses = [] as any;
+                for (let item of _data["activeProcesses"])
+                    this.activeProcesses!.push(ConversionProcess.fromJS(item));
+            }
+            if (Array.isArray(_data["completedProcesses"])) {
+                this.completedProcesses = [] as any;
+                for (let item of _data["completedProcesses"])
+                    this.completedProcesses!.push(ConversionProcess.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): QueueStatusArgs {
+        data = typeof data === 'object' ? data : {};
+        let result = new QueueStatusArgs();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.queuedProcesses)) {
+            data["queuedProcesses"] = [];
+            for (let item of this.queuedProcesses)
+                data["queuedProcesses"].push(item.toJSON());
+        }
+        if (Array.isArray(this.activeProcesses)) {
+            data["activeProcesses"] = [];
+            for (let item of this.activeProcesses)
+                data["activeProcesses"].push(item.toJSON());
+        }
+        if (Array.isArray(this.completedProcesses)) {
+            data["completedProcesses"] = [];
+            for (let item of this.completedProcesses)
+                data["completedProcesses"].push(item.toJSON());
+        }
+        return data;
+    }
+}
+
+export interface IQueueStatusArgs {
+    queuedProcesses?: ConversionProcess[] | undefined;
+    activeProcesses?: ConversionProcess[] | undefined;
+    completedProcesses?: ConversionProcess[] | undefined;
 }
 
 export class WorkingDirectoryResponse implements IWorkingDirectoryResponse {

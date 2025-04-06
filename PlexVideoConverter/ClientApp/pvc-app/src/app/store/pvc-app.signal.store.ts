@@ -1,4 +1,4 @@
-import { FolderStats, FolderStatsApiClient } from '../nswag/pvc-client';
+import {FileStats, FolderStats, FolderStatsApiClient} from '../nswag/pvc-client';
 import {patchState, signalStore, withComputed, withMethods, withState} from '@ngrx/signals';
 import {computed, inject} from '@angular/core';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
@@ -22,14 +22,16 @@ export const PvcAppStore = signalStore(
     videoList: computed(() => {
       return wdStats().h264FileNames ?? [];
     }),
-    videoTable: computed(() => {
+    h264VideoTable: computed(() => {
       let data = wdStats().h264FileNames ?? [];
       return data.map(f => {
         return {
+          ...new FileStats(f),
           fileName: f.fileName,
           sizeGB: f.sizeGB?.toFixed(3) + " GB",
           h265Size: (+(f.sizeGB ?? 0) - +(f.possibleGBSavings ?? 0)).toFixed(3) + " GB",
-        }
+          enqueue: true
+        };
       });
     })
   })),

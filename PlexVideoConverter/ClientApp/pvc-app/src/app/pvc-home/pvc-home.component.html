@@ -21,7 +21,12 @@
   </mat-card>
   <div style="display: flex; flex-direction: row; justify-content: space-around">
     <pvc-gauge></pvc-gauge>
-    <pvc-video-list></pvc-video-list>
+    <pvc-video-list title="H.264 Videos" description="Convert these videos to reduce space"
+                    [videoTable]="pvcAppStore.h264VideoTable()" [showEnqueue]="true"></pvc-video-list>
+
   </div>
+
+  <pvc-video-list title="Conversion Queue" description="Videos queued for conversion"
+                  [videoTable]="" [showEnqueue]="false"></pvc-video-list>
 </ng-template>
 

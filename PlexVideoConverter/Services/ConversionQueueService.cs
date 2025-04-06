@@ -1,6 +1,5 @@
 ﻿using NLog;
 using PlexVideoConverter.Models;
-using PlexVideoConverter.Models.FileBrowser;
 
 namespace PlexVideoConverter.Services;
 
@@ -52,12 +51,12 @@ public class ConversionQueueService
         }
     }
 
-    public void RemoveItem(List<FileNode> nodesToDequeue)
+    public void RemoveItem(List<FileStats> filesToDequeue)
     {
-        nodesToDequeue.ForEach(node =>
+        filesToDequeue.ForEach(file =>
         {
             var process = QueuedProcesses
-                .FirstOrDefault(qp => qp.Value.InputName == node.Name).Value;
+                .FirstOrDefault(qp => qp.Value.InputName == file.FileName).Value;
             if (process != null)
                 Dequeue(process.Id);
         });
