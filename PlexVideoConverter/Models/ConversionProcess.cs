@@ -30,8 +30,7 @@ public class ConversionProcess
         FilePath = args.FullPath;
         Progress = 0;
         InputName = args.Name ?? FilePath;
-        OutputName = InputName.Substring(InputName.LastIndexOf("\\", StringComparison.Ordinal),
-                InputName.Length - InputName.LastIndexOf("\\", StringComparison.Ordinal))
+        OutputName = PathUtils.GetFileName(InputName)
             .Replace(".mp4", ".mkv").Replace(".avi", ".mkv");
     }
 

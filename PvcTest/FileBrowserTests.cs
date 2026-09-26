@@ -23,7 +23,7 @@ public class FileBrowserTests
     public void TestGetChildren()
     {
         var childRequest = new FileChildrenRequest();
-        childRequest.Path = "C:/";
+        childRequest.Path = FileBrowserService.GetDriveListAsStrings().First();
         childRequest.IncludeDirectories = true;
         childRequest.IncludeFiles = true;
         var childNodes = FileBrowserService.GetDirectoryChildrenNodes(childRequest);

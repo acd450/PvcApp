@@ -28,8 +28,10 @@ public class FfmpegCoreService
     /// </summary>
     public static void TestConvertVideo()
     {
-        var inputName = "C:\\Users\\user\\Videos\\ffmpeg-ToConvert\\Keystone Instagram.mp4";
-        var outputName = "C:\\Users\\user\\Videos\\ffmpeg-ToConvert\\Keystone Instagram-sm.mkv";
+        var testFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+            "Videos", "ffmpeg-ToConvert");
+        var inputName = Path.Combine(testFolder, "Keystone Instagram.mp4");
+        var outputName = Path.Combine(testFolder, "Keystone Instagram-sm.mkv");
         
         try
         {
@@ -54,6 +56,7 @@ public class FfmpegCoreService
                 SettingsService.Instance.GetExportSettings().FirstOrDefault()?
                     .FolderPath;
             var outputFilePath = Path.Combine(outputPath ?? string.Empty, fp.OutputName.TrimStart('\\', '/'));
+
 
             // ffmpeg will not create a missing output directory itself
             if (!string.IsNullOrEmpty(outputPath)) Directory.CreateDirectory(outputPath);
@@ -119,13 +122,12 @@ public class FfmpegCoreService
     {
         try
         {
-            var fileName = fp.FilePath.Substring(fp.FilePath.LastIndexOf("\\", StringComparison.Ordinal),
-                fp.FilePath.Length - fp.FilePath.LastIndexOf("\\", StringComparison.Ordinal));
+            var fileName = PathUtils.GetFileName(fp.FilePath);
 
             var completedPath =
                 SettingsService.Instance.GetPostImportSettings()?
                     .FolderPath;
-            var destinationPath = Path.Combine(completedPath ?? string.Empty, fileName.TrimStart('\\', '/'));
+            var destinationPath = Path.Combine(completedPath ?? string.Empty, fileName);
 
             // File.Move will not create a missing destination directory itself
             if (!string.IsNullOrEmpty(completedPath)) Directory.CreateDirectory(completedPath);
@@ -150,10 +152,8 @@ public class FfmpegCoreService
             SettingsService.Instance.GetExportSettings().FirstOrDefault()?
                 .FolderPath;
 
-        var outputFileName = inputFilePath.Substring(inputFilePath.LastIndexOf("\\", StringComparison.Ordinal),
-                inputFilePath.Length - inputFilePath.LastIndexOf("\\", StringComparison.Ordinal))
-            .Replace(".mp4", ".mkv");
-        var outputFilePath = Path.Combine(outputPath ?? string.Empty, outputFileName.TrimStart('\\', '/'));
+        var outputFileName = PathUtils.GetFileName(inputFilePath).Replace(".mp4", ".mkv");
+        var outputFilePath = Path.Combine(outputPath ?? string.Empty, outputFileName);
 
         var fiInput = new FileInfo(inputFilePath);
         var fiOutput = new FileInfo(outputFilePath);

@@ -91,7 +91,7 @@ public class FileListenerService
     }
     
     /// <summary>
-    /// Check if the file has a lock on it.  If it does the file is still being transferred to the disk
+    /// Check if the file is still being written to the disk.
     /// </summary>
     /// <param name="file"></param>
     /// <returns></returns>
@@ -99,6 +99,11 @@ public class FileListenerService
     {
         //check that problem is not in destination file
         if (File.Exists(file) != true) return false;
+
+        // Unix has no mandatory locking, so an exclusive open succeeds mid-copy.
+        // Fall back to watching for the file size to settle.
+        if (!OperatingSystem.IsWindows()) return IsFileSizeChanging(file);
+
         FileStream? stream = null;
         try
         {
@@ -118,5 +123,19 @@ public class FileListenerService
             stream?.Close();
         }
         return false;
+    }
+
+    private static bool IsFileSizeChanging(string file)
+    {
+        try
+        {
+            var initialLength = new FileInfo(file).Length;
+            Thread.Sleep(1000);
+            return new FileInfo(file).Length != initialLength;
+        }
+        catch (IOException)
+        {
+            return true;
+        }
     }
 }

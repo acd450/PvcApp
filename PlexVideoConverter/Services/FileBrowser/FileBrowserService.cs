@@ -44,18 +44,7 @@ public class FileBrowserService
         // Otherwise massage the provided path and get its children
         else
         {
-            // Determine if this path is in list of drives
-            var isDriveFound = GetDriveListAsStrings().Exists(s => s[0] == req.Path[0]);
-
-            var correctedPath = req.Path;
-            if (isDriveFound)
-            {
-                // Replace the "/" in path with "\"
-                var allDrives = GetDriveNodeList();
-                var d = allDrives.Find(s => s.driveLetter[0] == req.Path[0]);
-                correctedPath = correctedPath.Remove(0, 3); // Ex "C:\" is the three letter drive prefix 
-                correctedPath = correctedPath.Insert(0, d.drivePath);
-            }
+            var correctedPath = NormalizeRequestPath(req.Path);
 
             if (req.IncludeDirectories)
                 childPathsIsDir.AddRange(Directory.GetDirectories(correctedPath).Select(dirPath => new Tuple<string, bool>(dirPath, true)));
@@ -114,6 +103,20 @@ public class FileBrowserService
     }
     
     /// <summary>
+    /// Converts a path coming from the browser into one the local file system understands.
+    /// </summary>
+    private static string NormalizeRequestPath(string path)
+    {
+        var normalized = PathUtils.Normalize(path);
+
+        // Windows rejects a bare "C:" so keep the trailing separator on drive roots
+        if (OperatingSystem.IsWindows() && normalized.Length == 2 && normalized[1] == ':')
+            normalized += Path.DirectorySeparatorChar;
+
+        return normalized;
+    }
+
+    /// <summary>
     /// Gets a list of all the local mapped drives
     /// </summary>
     /// <returns>List of type DriveNode</returns>
@@ -123,10 +126,8 @@ public class FileBrowserService
 
         try
         {
-            var driveNames = DriveInfo.GetDrives().Select(d => d.Name).ToList();
-
-            foreach (var driveName in driveNames)
-                driveNodes.Add(new DriveNode{driveLetter = driveName, drivePath = driveName});
+            foreach (var rootName in GetDriveListAsStrings())
+                driveNodes.Add(new DriveNode { driveLetter = rootName, drivePath = rootName });
 
             return driveNodes;
         }
@@ -138,21 +139,31 @@ public class FileBrowserService
     }
     
     /// <summary>
-    /// Returns a list of the drive names as strings
+    /// Returns the browsable roots: drive letters on Windows, "/" plus mounted volumes elsewhere.
     /// </summary>
     /// <returns>List of string names for the drives</returns>
     public static List<string> GetDriveListAsStrings()
     {
-        var mappedDrives = new List<string>();
-
         try
         {
-            return DriveInfo.GetDrives().Select(d => d.Name).ToList();
+            if (OperatingSystem.IsWindows())
+                return DriveInfo.GetDrives().Select(d => d.Name).ToList();
+
+            // DriveInfo on macOS/Linux also reports dozens of pseudo file systems, so list the
+            // filesystem root and any mounted volumes instead.
+            var roots = new List<string> { "/" };
+            foreach (var mountRoot in new[] { "/Volumes", "/media", "/mnt" })
+            {
+                if (Directory.Exists(mountRoot))
+                    roots.AddRange(Directory.GetDirectories(mountRoot));
+            }
+
+            return roots;
         }
         catch(Exception ex)
         {
             logger.Error($"Exception during FileBrowserService.GetMappedDriveListAsStrings: {ex.Message}", ex);
-            return mappedDrives;
+            return [];
         }
     }
 }
