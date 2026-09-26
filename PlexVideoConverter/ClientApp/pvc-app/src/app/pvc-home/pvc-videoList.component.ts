@@ -1,4 +1,4 @@
-﻿import {Component, inject, Input, OnInit} from '@angular/core';
+﻿import {Component, inject, Input, OnInit, signal} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {MatCardModule} from '@angular/material/card';
 import {PvcAppStore} from '../store/pvc-app.signal.store';
@@ -7,6 +7,7 @@ import {MatTableModule} from '@angular/material/table';
 import {PvcConversionClientService} from '../service/pvc-conversion-client.service';
 import {MatButtonModule, MatIconButton} from '@angular/material/button';
 import {MatIconModule} from '@angular/material/icon';
+import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
 
 @Component({
   selector: 'pvc-video-list',
@@ -16,9 +17,9 @@ import {MatIconModule} from '@angular/material/icon';
     MatTableModule,
     MatButtonModule,
     MatIconModule,
+    MatProgressSpinnerModule,
   ],
   styleUrl: './pvc-home.component.css',
-  providers: [PvcConversionClientService],
   template: `
     <mat-card class="pvc-thick-card" appearance="outlined">
       <mat-card-header>
@@ -41,16 +42,20 @@ import {MatIconModule} from '@angular/material/icon';
 
           <!-- Name Column -->
           <ng-container matColumnDef="h265Size">
-            <th mat-header-cell *matHeaderCellDef> Converted Size</th>
+            <th mat-header-cell *matHeaderCellDef> {{h265ColumnHeader}}</th>
             <td mat-cell *matCellDef="let element"> {{ element.h265Size }}</td>
           </ng-container>
 
           <ng-container matColumnDef="enqueue">
             <th mat-header-cell *matHeaderCellDef> Enqueue </th>
             <td mat-cell *matCellDef="let element">
-                <button mat-icon-button (click)="enqueueVideo(element)">
-                  <mat-icon>add</mat-icon>
-                </button>
+                @if (isEnqueued(element)) {
+                  <mat-spinner diameter="24"></mat-spinner>
+                } @else {
+                  <button mat-icon-button class="enqueue-button" (click)="enqueueVideo(element)">
+                    <mat-icon>add</mat-icon>
+                  </button>
+                }
             </td>
           </ng-container>
 
@@ -70,6 +75,9 @@ export class PvcVideoListComponent implements OnInit {
   @Input() showEnqueue: boolean = false;
   @Input() title = "Unnamed Video List";
   @Input() description = "Unnamed Video List description";
+  @Input() h265ColumnHeader = "Converted Size";
+
+  enqueuedFileNames = signal(new Set<string>());
 
   constructor(public pvcClientService: PvcConversionClientService) {
   }
@@ -81,9 +89,25 @@ export class PvcVideoListComponent implements OnInit {
     }
   }
 
-  enqueueVideo(stat: FolderStats) {
-    this.pvcClientService.enqueueVideoFile(stat)
+  isEnqueued(element: any): boolean {
+    return this.enqueuedFileNames().has(element.fileName);
+  }
+
+  enqueueVideo(element: any) {
+    const stat: FileStats = element.originalData ?? element;
+
+    this.enqueuedFileNames.update(names => new Set(names).add(element.fileName));
+
+    this.pvcClientService.enqueueVideoFile(stat).catch(() => {
+      // Revert the loading state if the enqueue request failed to send
+      this.enqueuedFileNames.update(names => {
+        const updated = new Set(names);
+        updated.delete(element.fileName);
+        return updated;
+      });
+    });
   }
 
   protected readonly FileStats = FileStats;
 }
+

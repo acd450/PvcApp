@@ -75,13 +75,28 @@ try
     app.UseStaticFiles();
     if (!app.Environment.IsDevelopment()) app.UseSpaStaticFiles();
 
+    app.UseRouting();
+    
     app.UseCors(corsBuilder =>
     {
-        corsBuilder.AllowAnyOrigin().AllowAnyHeader()
-            .AllowAnyMethod(); // Configures CORS to allow any origin, header, and method.
+        if (app.Environment.IsDevelopment())
+        {
+            // Development: Angular runs on port 4200
+            corsBuilder.WithOrigins("http://localhost:4200", "https://localhost:4200")
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials(); // SignalR requires AllowCredentials
+        }
+        else
+        {
+            // Production: Angular is served from same origin, but still configure CORS for safety
+            corsBuilder.AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials()
+                .SetIsOriginAllowed(_ => true); // Allow same-origin requests
+        }
     });
 
-    app.UseRouting();
     app.UseEndpoints(endpoints =>
     {
         endpoints.MapHub<PvcConversionHub>("/pvcConversionHub");

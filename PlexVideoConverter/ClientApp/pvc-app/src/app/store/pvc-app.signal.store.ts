@@ -26,7 +26,7 @@ export const PvcAppStore = signalStore(
       let data = wdStats().h264FileNames ?? [];
       return data.map(f => {
         return {
-          ...new FileStats(f),
+          originalData: f, // Keep the original FileStats for backend operations
           fileName: f.fileName,
           sizeGB: f.sizeGB?.toFixed(3) + " GB",
           h265Size: (+(f.sizeGB ?? 0) - +(f.possibleGBSavings ?? 0)).toFixed(3) + " GB",

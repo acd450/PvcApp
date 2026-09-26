@@ -1,4 +1,6 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.SignalR;
+using NLog;
 using PlexVideoConverter.Models;
 using PlexVideoConverter.Models.FileBrowser;
 using PlexVideoConverter.Services;
@@ -10,18 +12,26 @@ namespace PlexVideoConverter.Hubs;
 /// </summary>
 public class PvcConversionHub : Hub
 {
-    public async Task EnqueueConversion(List<FileStats> nodesToQueue)
+    private static Logger logger = LogManager.GetCurrentClassLogger();
+
+    public Task EnqueueConversion(List<FileStats> nodesToQueue)
     {
+        logger.Info($"EnqueueConversion received: {JsonSerializer.Serialize(nodesToQueue)}");
+
         //await Clients.All.SendAsync("UpdateQueue", msg);
         nodesToQueue.ForEach(ntq =>
         {
             ConversionQueueService.Instance.AddItems(new ConversionProcess(ntq));
         });
+        
+        return Task.CompletedTask;
     }
-    public async Task DequeueConversion(List<FileStats> nodesToDequeue)
+    public Task DequeueConversion(List<FileStats> nodesToDequeue)
     {
         //await Clients.All.SendAsync("UpdateQueue", msg);
         ConversionQueueService.Instance.RemoveItem(nodesToDequeue);
+        
+        return Task.CompletedTask;
     }
 
     public override async Task OnConnectedAsync()

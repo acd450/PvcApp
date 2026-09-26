@@ -7,6 +7,7 @@ import { PvcStatsComponent } from './pvc-stats.component';
 import { PvcGaugeComponent } from './pvc-gauge.component';
 import {PvcVideoListComponent} from './pvc-videoList.component';
 import {MatButton} from '@angular/material/button';
+import {PvcConversionClientService} from '../service/pvc-conversion-client.service';
 
 @Component({
   selector: 'pvc-home',
@@ -28,6 +29,7 @@ import {MatButton} from '@angular/material/button';
 export class PvcHomeComponent {
 
   pvcAppStore = inject(PvcAppStore);
+  pvcClientService = inject(PvcConversionClientService);
 
   folderName = '';
   constructor() {

@@ -24,25 +24,38 @@ public class ConversionQueueService
     public async void AddItems(ConversionProcess fp)
     {
         QueuedProcesses.Add(fp.Id, fp);
-        await Instance.Enqueue(() => FfmpegCoreService.Instance.ConvertVideoAsync(ref fp), fp.Id);
-        
-        ActiveProcesses.Remove(fp.Id);
-        CompletedProcesses.Add(fp.Id, fp);
-        FfmpegCoreService.Instance.CompleteFileConversion(fp);
+        await PvcConversionClient.Instance.QueueStatus(GetQueueStatus());
+
+        var wasProcessed = await Instance.Enqueue(() => FfmpegCoreService.Instance.ConvertVideoAsync(ref fp), fp.Id);
+
+        if (wasProcessed)
+        {
+            ActiveProcesses.Remove(fp.Id);
+            CompletedProcesses.Add(fp.Id, fp);
+            FfmpegCoreService.Instance.CompleteFileConversion(fp);
+        }
+
+        await PvcConversionClient.Instance.QueueStatus(GetQueueStatus());
     }
 
-    private async Task Enqueue(Func<Task> taskGenerator, Guid processId)
+    private async Task<bool> Enqueue(Func<Task> taskGenerator, Guid processId)
     {
         await sem.WaitAsync();
         try
         {
             logger.Info("Tasked started...");
 
+            // Must check before MoveProcessToActive, which unconditionally removes it from QueuedProcesses
+            if (!QueuedProcesses.ContainsKey(processId))
+            {
+                logger.Warn($"Process {processId} not found, skipping");
+                return false;
+            }
+
             MoveProcessToActive(processId);
-            PvcConversionClient.Instance.QueueStatus(GetQueueStatus());
-            if (QueuedProcesses.ContainsKey(processId))
-                await taskGenerator();
-            else logger.Warn($"Process {processId} not found, skipping");
+            await PvcConversionClient.Instance.QueueStatus(GetQueueStatus());
+            await taskGenerator();
+            return true;
         }
         finally
         {

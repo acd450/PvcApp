@@ -41,9 +41,9 @@ public class ConversionProcess
         FilePath = file.FullPath;
         Progress = 0;
         InputName = file.FileName;
-        OutputName = InputName.Substring(InputName.LastIndexOf("\\", StringComparison.Ordinal),
-                InputName.Length - InputName.LastIndexOf("\\", StringComparison.Ordinal))
+        OutputName = InputName
             .Replace(".mp4", ".mkv").Replace(".avi", ".mkv");
-        InputSizeGB = ((double)(File.Open(file.FullPath + file.FileName, FileMode.Open).Length >> 20)/1024).ToString();
+        // Use FileInfo instead of File.Open to avoid leaving an unclosed handle that locks the file
+        InputSizeGB = ((double)(new FileInfo(file.FullPath).Length >> 20) / 1024).ToString();
     }
 }
