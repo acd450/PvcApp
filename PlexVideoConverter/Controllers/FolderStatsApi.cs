@@ -19,6 +19,7 @@ public class FolderStatsApi: ControllerBase
     [HttpGet("/folder/workingdir")]
     public ActionResult<WorkingDirectoryResponse> GetWorkingDirectory()
     {
+        _logger.LogInformation("HTTP GET /folder/workingdir");
         try
         {
             return Ok(new WorkingDirectoryResponse {
@@ -44,6 +45,7 @@ public class FolderStatsApi: ControllerBase
     [HttpPost("/folder/workingdir")]
     public ActionResult SetWorkingDirectory([FromBody] string workingDirectory)
     {
+        _logger.LogInformation($"HTTP POST /folder/workingdir workingDirectory: {workingDirectory}");
         try
         {
             FolderStatsService.Instance.WorkingDirectory = workingDirectory;
@@ -59,6 +61,7 @@ public class FolderStatsApi: ControllerBase
     [HttpGet("/folder/stats")]
     public ActionResult<FolderStats> GetStats()
     {
+        _logger.LogInformation("HTTP GET /folder/stats");
         try
         {
             return Ok(FolderStatsService.Instance.GetWorkingDirectoryStats());

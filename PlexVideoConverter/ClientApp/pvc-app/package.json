@@ -20,6 +20,7 @@
     "@angular/platform-browser": "^19.2.2",
     "@angular/platform-browser-dynamic": "^19.2.2",
     "@angular/router": "^19.2.2",
+    "@microsoft/signalr": "^8.0.7",
     "@ngrx/effects": "^19.0.1",
     "@ngrx/operators": "^19.0.1",
     "@ngrx/router-store": "^19.0.1",

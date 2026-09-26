@@ -1,6 +1,7 @@
 ﻿using FFMpegCore;
 using FFMpegCore.Enums;
 using NLog;
+using PlexVideoConverter.Hubs;
 using PlexVideoConverter.Models;
 
 namespace PlexVideoConverter.Services;
@@ -14,8 +15,8 @@ public class FfmpegCoreService
 
     private SemaphoreSlim sem;
     
-    public Dictionary<Guid, FileProcess> FileProcesses { get; set; } = new();
-    public Dictionary<Guid, FileProcess> CompletedFileProcesses { get; set; } = new();
+    public Dictionary<Guid, ConversionProcess> FileProcesses { get; set; } = new();
+    public Dictionary<Guid, ConversionProcess> CompletedFileProcesses { get; set; } = new();
 
     public FfmpegCoreService()
     {
@@ -45,52 +46,38 @@ public class FfmpegCoreService
         }
     }
 
-    public async void AddItems(FileProcess fp)
-    {
-        FileProcesses.Add(fp.Id, fp);
-        await Instance.Enqueue(() => Instance.ConvertVideoAsync(ref fp));
-        
-        Instance.CompleteFileConversion(fp);
-    }
-    
-    public async Task Enqueue(Func<Task> taskGenerator)
-    {
-        await sem.WaitAsync();
-        try
-        {
-            logger.Info("Tasked started...");
-            await taskGenerator();
-        }
-        finally
-        {
-            logger.Info("Task finished processing...");
-            sem.Release();
-        }
-    }
-
-    private Task ConvertVideoAsync(ref FileProcess fp)
+    public Task ConvertVideoAsync(ref ConversionProcess fp)
     {
         try
         {
             var outputPath =
                 SettingsService.Instance.GetExportSettings().FirstOrDefault()?
                     .FolderPath;
+            var outputFilePath = Path.Combine(outputPath ?? string.Empty, fp.OutputName.TrimStart('\\', '/'));
+
+            // ffmpeg will not create a missing output directory itself
+            if (!string.IsNullOrEmpty(outputPath)) Directory.CreateDirectory(outputPath);
 
             logger.Info($"Converting File: {fp.FilePath}");
-            logger.Info($"Output File: {outputPath + fp.OutputName}");
+            logger.Info($"Output File: {outputFilePath}");
 
-            var percentTracker = 0;
+            var percentTrackerFrontend = 0;
+            var percentTrackerLogging = 0;
             var fpId = fp.Id;
+
+            // Track this process so ProgressHandler can look it up and clients can see it as active
+            FileProcesses[fpId] = fp;
 
             var videoDuration = FFProbe.Analyse(fp.FilePath).Duration;
             var videoQuality = SettingsService.Instance.FfmpegSettings?.videoQuality ?? 24;
-            var reportPercentProgress = SettingsService.Instance.FfmpegSettings?.reportPercentProgress ?? 10;
+            var reportPercentProgressFrontend = SettingsService.Instance.FfmpegSettings?.reportPercentProgressFrontend ?? 1;
+            var reportPercentProgressLogging = SettingsService.Instance.FfmpegSettings?.reportPercentProgressLogging ?? 20;
 
             logger.Info($"Ffmpeg has crf={videoQuality}");
 
             return FFMpegArguments
                 .FromFileInput(fp.FilePath)
-                .OutputToFile(outputPath + fp.OutputName, false, options => options
+                .OutputToFile(outputFilePath, false, options => options
                     .WithVideoCodec(VideoCodec.LibX265)
                     .WithConstantRateFactor(videoQuality)
                     .WithFastStart())
@@ -101,11 +88,19 @@ public class FfmpegCoreService
             {
                 //Update current progress
                 FileProcesses[fpId].Progress = p;
-                //Only log when the percent exceeds the reportPercentCompletion
-                if (percentTracker < p / reportPercentProgress)
+
+                //Only log when the percent exceeds the logging report interval
+                if (percentTrackerLogging < p / reportPercentProgressLogging)
                 {
                     logger.Info("Current Video Progress: " + p + "%");
-                    percentTracker = (int)Math.Ceiling(p / reportPercentProgress);
+                    percentTrackerLogging = (int)Math.Ceiling(p / reportPercentProgressLogging);
+                }
+
+                //Only notify the frontend when the percent exceeds the frontend report interval
+                if (percentTrackerFrontend < p / reportPercentProgressFrontend)
+                {
+                    PvcConversionClient.Instance.SendConversionProgressUpdate(fpId, (int)p);
+                    percentTrackerFrontend = (int)Math.Ceiling(p / reportPercentProgressFrontend);
                 }
             }
         }
@@ -120,21 +115,33 @@ public class FfmpegCoreService
     /// Anything to run after the video conversion is complete. Currently moves files to a 
     /// </summary>
     /// <param name="fullPathFile"></param>
-    public void CompleteFileConversion(FileProcess fp)
+    public void CompleteFileConversion(ConversionProcess fp)
     {
-        var fileName = fp.FilePath.Substring(fp.FilePath.LastIndexOf("\\", StringComparison.Ordinal),
-            fp.FilePath.Length - fp.FilePath.LastIndexOf("\\", StringComparison.Ordinal));
-        
-        var completedPath =
-            SettingsService.Instance.GetPostImportSettings()?
-                .FolderPath;
-        
-        CalculateConversionStats(fp.FilePath);
-        
-        logger.Info($"Finished converting video, moving to: {completedPath + fileName}");
-        
-        File.Move(fp.FilePath, completedPath + fileName);
-        FileProcesses.Remove(fp.Id); CompletedFileProcesses.Add(fp.Id, fp);
+        try
+        {
+            var fileName = fp.FilePath.Substring(fp.FilePath.LastIndexOf("\\", StringComparison.Ordinal),
+                fp.FilePath.Length - fp.FilePath.LastIndexOf("\\", StringComparison.Ordinal));
+
+            var completedPath =
+                SettingsService.Instance.GetPostImportSettings()?
+                    .FolderPath;
+            var destinationPath = Path.Combine(completedPath ?? string.Empty, fileName.TrimStart('\\', '/'));
+
+            // File.Move will not create a missing destination directory itself
+            if (!string.IsNullOrEmpty(completedPath)) Directory.CreateDirectory(completedPath);
+
+            CalculateConversionStats(fp.FilePath);
+
+            logger.Info($"Finished converting video, moving to: {destinationPath}");
+
+            File.Move(fp.FilePath, destinationPath);
+            FileProcesses.Remove(fp.Id);
+            CompletedFileProcesses.Add(fp.Id, fp);
+        }
+        catch (Exception ex)
+        {
+            logger.Error("Error during file conversion. " + ex.Message, ex);
+        }
     }
 
     private void CalculateConversionStats(string inputFilePath)
@@ -146,9 +153,10 @@ public class FfmpegCoreService
         var outputFileName = inputFilePath.Substring(inputFilePath.LastIndexOf("\\", StringComparison.Ordinal),
                 inputFilePath.Length - inputFilePath.LastIndexOf("\\", StringComparison.Ordinal))
             .Replace(".mp4", ".mkv");
+        var outputFilePath = Path.Combine(outputPath ?? string.Empty, outputFileName.TrimStart('\\', '/'));
 
         var fiInput = new FileInfo(inputFilePath);
-        var fiOutput = new FileInfo(outputPath + outputFileName);
+        var fiOutput = new FileInfo(outputFilePath);
 
         if (!fiInput.Exists)
         {
@@ -156,7 +164,7 @@ public class FfmpegCoreService
             return;
         } if (!fiOutput.Exists)
         {
-            logger.Error("Cannot find Output file for final stats. File Path: " + outputPath + outputFileName);
+            logger.Error("Cannot find Output file for final stats. File Path: " + outputFilePath);
             return;
         }
 

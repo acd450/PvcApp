@@ -15,10 +15,17 @@
       </div>
       <div class="pvc-settings-container">
         <div class="pvc-settings-text">Log Out Every: </div>
-        <mat-slider min="0" max="50" step="1">
-          <input matSliderThumb formControlName="reportPercentProgress">
+        <mat-slider min="1" max="50" step="1">
+          <input matSliderThumb formControlName="reportPercentProgressLogging">
         </mat-slider>
-        <div class="pvc-settings-text"> {{reportPercentProgressControl.value}} %</div>
+        <div class="pvc-settings-text"> {{reportPercentProgressLoggingControl.value}} %</div>
+      </div>
+      <div class="pvc-settings-container">
+        <div class="pvc-settings-text">Update Frontend Every: </div>
+        <mat-slider min="1" max="50" step="1">
+          <input matSliderThumb formControlName="reportPercentProgressFrontend">
+        </mat-slider>
+        <div class="pvc-settings-text"> {{reportPercentProgressFrontendControl.value}} %</div>
       </div>
       <div>Settings File Location: {{ffmpegSettingsLocationControl.value}}</div>
     </form>

@@ -84,9 +84,9 @@ public class FileListenerService
             Thread.Sleep(2000);
         }
 
-        var fileProcess = new FileProcess(e);
+        var fileProcess = new ConversionProcess(e);
         
-        Task.Run(() => FfmpegCoreService.Instance.AddItems(fileProcess));
+        Task.Run(() => ConversionQueueService.Instance.AddItems(fileProcess));
         logger.Debug($"{fileName} has been queued.");
     }
     

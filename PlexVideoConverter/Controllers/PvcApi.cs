@@ -17,7 +17,7 @@ public class PvcApi: ControllerBase
     }
     
     [HttpGet("/files/queued")]
-    public ActionResult<List<FileProcess>> GetFilesInQueue()
+    public ActionResult<List<ConversionProcess>> GetFilesInQueue()
     {
         try
         {

@@ -40,7 +40,7 @@ public class SettingsService
         }
         catch (Exception ex)
         {
-            Console.WriteLine("Error in GlobalSettingsService. " + ex.Message);
+            Console.WriteLine("Error in PopulateGlobalSettings. " + ex.Message);
             logger.Error("Error in PopulateGlobalSettings. " + ex.Message, ex);
         }
     }
