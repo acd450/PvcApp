@@ -2,9 +2,24 @@
   max-width: 450px;
   min-width: 400px;
   margin: 10px;
+  flex: 0 0 auto;
 }
 
 .pvc-thick-card {
-  max-width: 700px;
+  flex: 1 1 0;
+  min-width: 0;
   margin: 10px;
+}
+
+.pvc-table-container {
+  overflow-x: auto;
+}
+
+.pvc-table-container.pvc-scrollable {
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+.pvc-table-container table {
+  width: 100%;
 }

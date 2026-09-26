@@ -64,7 +64,7 @@ public class ConversionQueueService
         }
     }
 
-    public void RemoveItem(List<FileStats> filesToDequeue)
+    public async void RemoveItem(List<FileStats> filesToDequeue)
     {
         filesToDequeue.ForEach(file =>
         {
@@ -73,6 +73,8 @@ public class ConversionQueueService
             if (process != null)
                 Dequeue(process.Id);
         });
+
+        await PvcConversionClient.Instance.QueueStatus(GetQueueStatus());
     }
 
     private void Dequeue(Guid processId)

@@ -61,7 +61,8 @@ public class FfmpegCoreService
             logger.Info($"Converting File: {fp.FilePath}");
             logger.Info($"Output File: {outputFilePath}");
 
-            var percentTracker = 0;
+            var percentTrackerFrontend = 0;
+            var percentTrackerLogging = 0;
             var fpId = fp.Id;
 
             // Track this process so ProgressHandler can look it up and clients can see it as active
@@ -69,7 +70,8 @@ public class FfmpegCoreService
 
             var videoDuration = FFProbe.Analyse(fp.FilePath).Duration;
             var videoQuality = SettingsService.Instance.FfmpegSettings?.videoQuality ?? 24;
-            var reportPercentProgress = SettingsService.Instance.FfmpegSettings?.reportPercentProgress ?? 10;
+            var reportPercentProgressFrontend = SettingsService.Instance.FfmpegSettings?.reportPercentProgressFrontend ?? 1;
+            var reportPercentProgressLogging = SettingsService.Instance.FfmpegSettings?.reportPercentProgressLogging ?? 20;
 
             logger.Info($"Ffmpeg has crf={videoQuality}");
 
@@ -86,12 +88,20 @@ public class FfmpegCoreService
             {
                 //Update current progress
                 FileProcesses[fpId].Progress = p;
-                //Only log when the percent exceeds the reportPercentCompletion
-                if (!(percentTracker < p / reportPercentProgress)) return;
-                
-                logger.Info("Current Video Progress: " + p + "%");
-                PvcConversionClient.Instance.SendConversionProgressUpdate(fpId, (int)p);
-                percentTracker = (int)Math.Ceiling(p / reportPercentProgress);
+
+                //Only log when the percent exceeds the logging report interval
+                if (percentTrackerLogging < p / reportPercentProgressLogging)
+                {
+                    logger.Info("Current Video Progress: " + p + "%");
+                    percentTrackerLogging = (int)Math.Ceiling(p / reportPercentProgressLogging);
+                }
+
+                //Only notify the frontend when the percent exceeds the frontend report interval
+                if (percentTrackerFrontend < p / reportPercentProgressFrontend)
+                {
+                    PvcConversionClient.Instance.SendConversionProgressUpdate(fpId, (int)p);
+                    percentTrackerFrontend = (int)Math.Ceiling(p / reportPercentProgressFrontend);
+                }
             }
         }
         catch (Exception ex)

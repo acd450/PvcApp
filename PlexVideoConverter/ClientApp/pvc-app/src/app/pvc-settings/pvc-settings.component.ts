@@ -36,7 +36,8 @@ export class PvcSettingsComponent {
   ffmpegFormGroup: FormGroup;
 
   videoQualityControl = new FormControl(20);
-  reportPercentProgressControl = new FormControl(10);
+  reportPercentProgressFrontendControl = new FormControl(1);
+  reportPercentProgressLoggingControl = new FormControl(20);
   ffmpegSettingsLocationControl = new FormControl("");
 
   constructor(private pvcSettingsApi: PvcSettingsApiClient) {
@@ -44,13 +45,15 @@ export class PvcSettingsComponent {
         .subscribe(settings => {
           this._ffmpegSettings = settings;
           if (settings.videoQuality) this.videoQualityControl.setValue(settings.videoQuality);
-          if (settings.reportPercentProgress) this.reportPercentProgressControl.setValue(settings.reportPercentProgress);
+          if (settings.reportPercentProgressFrontend) this.reportPercentProgressFrontendControl.setValue(settings.reportPercentProgressFrontend);
+          if (settings.reportPercentProgressLogging) this.reportPercentProgressLoggingControl.setValue(settings.reportPercentProgressLogging);
           if (settings.ffmpegSettingsLocation) this.ffmpegSettingsLocationControl.setValue(settings.ffmpegSettingsLocation);
         });
 
     this.ffmpegFormGroup = new FormGroup({
       videoQuality: this.videoQualityControl,
-      reportPercentProgress: this.reportPercentProgressControl,
+      reportPercentProgressFrontend: this.reportPercentProgressFrontendControl,
+      reportPercentProgressLogging: this.reportPercentProgressLoggingControl,
       ffmpegSettingsLocation: this.ffmpegSettingsLocationControl,
     })
   }
@@ -58,7 +61,8 @@ export class PvcSettingsComponent {
   updateSettings() {
     let updatedSettings = new FfmpegSettings({
       videoQuality: this.videoQualityControl.value ?? this._ffmpegSettings.videoQuality,
-      reportPercentProgress: this.reportPercentProgressControl.value ?? this._ffmpegSettings.reportPercentProgress,
+      reportPercentProgressFrontend: this.reportPercentProgressFrontendControl.value ?? this._ffmpegSettings.reportPercentProgressFrontend,
+      reportPercentProgressLogging: this.reportPercentProgressLoggingControl.value ?? this._ffmpegSettings.reportPercentProgressLogging,
       ffmpegSettingsLocation: this._ffmpegSettings.ffmpegSettingsLocation
     });
 

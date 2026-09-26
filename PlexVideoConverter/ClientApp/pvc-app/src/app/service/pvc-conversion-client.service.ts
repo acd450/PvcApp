@@ -24,7 +24,17 @@ export class PvcConversionClientService {
       fileName: p.inputName,
       sizeGB: p.inputSizeGB ? `${p.inputSizeGB} GB` : '',
       h265Size: active.includes(p) ? `${Math.round(p.progress ?? 0)}%` : 'Queued',
+      isActive: active.includes(p),
     }));
+  });
+
+  /** File names currently queued or actively converting, used to disable re-enqueuing */
+  queuedOrActiveFileNames = computed(() => {
+    const status = this._queueStatus();
+    const names = [...(status.queuedProcesses ?? []), ...(status.activeProcesses ?? [])]
+      .map(p => p.inputName)
+      .filter((name): name is string => !!name);
+    return new Set(names);
   });
 
   constructor() {
@@ -58,6 +68,19 @@ export class PvcConversionClientService {
     return this._pvcHubConnection?.invoke('EnqueueConversion', [file])
       .catch(err => {
         console.error('Error invoking EnqueueConversion:', err);
+        throw err;
+      });
+  }
+
+  dequeueVideoFile(fileName: string): Promise<void> {
+    if (this._pvcHubConnection?.state !== 'Connected') {
+      console.error('SignalR connection is not established. Current state:', this._pvcHubConnection?.state);
+      return Promise.reject('SignalR connection is not established');
+    }
+
+    return this._pvcHubConnection?.invoke('DequeueConversion', [new FileStats({fileName})])
+      .catch(err => {
+        console.error('Error invoking DequeueConversion:', err);
         throw err;
       });
   }

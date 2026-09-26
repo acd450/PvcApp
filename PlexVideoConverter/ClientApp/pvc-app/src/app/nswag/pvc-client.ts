@@ -667,7 +667,8 @@ export interface IDriveNode {
 
 export class FfmpegSettings implements IFfmpegSettings {
     videoQuality?: number;
-    reportPercentProgress?: number;
+    reportPercentProgressFrontend?: number;
+    reportPercentProgressLogging?: number;
     ffmpegSettingsLocation?: string | undefined;
 
     constructor(data?: IFfmpegSettings) {
@@ -682,7 +683,8 @@ export class FfmpegSettings implements IFfmpegSettings {
     init(_data?: any) {
         if (_data) {
             this.videoQuality = _data["videoQuality"];
-            this.reportPercentProgress = _data["reportPercentProgress"];
+            this.reportPercentProgressFrontend = _data["reportPercentProgressFrontend"];
+            this.reportPercentProgressLogging = _data["reportPercentProgressLogging"];
             this.ffmpegSettingsLocation = _data["ffmpegSettingsLocation"];
         }
     }
@@ -697,7 +699,8 @@ export class FfmpegSettings implements IFfmpegSettings {
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["videoQuality"] = this.videoQuality;
-        data["reportPercentProgress"] = this.reportPercentProgress;
+        data["reportPercentProgressFrontend"] = this.reportPercentProgressFrontend;
+        data["reportPercentProgressLogging"] = this.reportPercentProgressLogging;
         data["ffmpegSettingsLocation"] = this.ffmpegSettingsLocation;
         return data;
     }
@@ -705,7 +708,8 @@ export class FfmpegSettings implements IFfmpegSettings {
 
 export interface IFfmpegSettings {
     videoQuality?: number;
-    reportPercentProgress?: number;
+    reportPercentProgressFrontend?: number;
+    reportPercentProgressLogging?: number;
     ffmpegSettingsLocation?: string | undefined;
 }
 
