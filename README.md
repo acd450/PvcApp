@@ -94,6 +94,7 @@ Still used to define the EXPORT and POST-IMPORT destination folders (and, if you
    dotnet build PlexVideoConverter/PlexVideoConverter.csproj
    dotnet run --project PlexVideoConverter/PlexVideoConverter.csproj
    ```
+   The app listens on `http://localhost:5454` by default in development, and `https://localhost:7121` is also available from the HTTPS profile.
 4. If `ffmpegSettingsLocation` is left empty, settings default to
    `%LOCALAPPDATA%\PlexVideoConverter\fileListenerSettings.json` — create that folder/file if it doesn't exist,
    or point `ffmpegSettingsLocation` at a folder of your choice.

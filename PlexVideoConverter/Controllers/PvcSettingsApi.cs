@@ -22,8 +22,16 @@ public class PvcSettingsApi: ControllerBase
         try
         {
             _logger.LogInformation("GET /ffmpeg/settings");
-            var fs = SettingsService.Instance.FfmpegSettings;
-            return Ok(fs);
+            var settings = SettingsService.Instance;
+            var fs = settings.FfmpegSettings ?? new FfmpegSettings();
+            // Report the resolved location, since the configured value may be empty or for another OS.
+            return Ok(new FfmpegSettings
+            {
+                videoQuality = fs.videoQuality,
+                reportPercentProgressFrontend = fs.reportPercentProgressFrontend,
+                reportPercentProgressLogging = fs.reportPercentProgressLogging,
+                ffmpegSettingsLocation = settings.SettingsLocation
+            });
         }
         catch (Exception ex)
         {
@@ -38,6 +46,8 @@ public class PvcSettingsApi: ControllerBase
         try
         {
             _logger.LogInformation("POST /ffmpeg/settings");
+            // The GET returns the resolved location, so keep the configured value instead of saving that back.
+            fs.ffmpegSettingsLocation = SettingsService.Instance.FfmpegSettings?.ffmpegSettingsLocation ?? string.Empty;
             SettingsService.Instance.FfmpegSettings = fs;
             return Ok();
         }
