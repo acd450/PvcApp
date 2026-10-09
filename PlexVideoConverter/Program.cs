@@ -38,6 +38,9 @@ try
     builder.Services.AddMvc(option => option.EnableEndpointRouting = false);
     builder.Services.AddSingleton<FileListenerService>();
     builder.Services.AddSingleton<FfmpegCoreService>();
+    builder.Services.AddSingleton(_ => new ConversionHistoryService(
+        Path.Combine(builder.Environment.ContentRootPath,
+            builder.Configuration["ConversionHistory:DatabasePath"] ?? "App_Data/conversions.sqlite")));
     builder.Logging.ClearProviders();
     builder.Host.UseNLog();
 
@@ -166,6 +169,7 @@ try
     SettingsService.Instance.FfmpegSettings = config.GetSection("FfmpegSettings").Get<FfmpegSettings>();
     SettingsService.Instance.PopulateGlobalSettings();
     
+    FfmpegCoreService.InitializeHistory(app.Services.GetRequiredService<ConversionHistoryService>());
     PvcConversionClient.Initialize(app.Services.GetRequiredService<IHubContext<PvcConversionHub>>());
 
     await app.StartAsync();

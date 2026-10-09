@@ -1,0 +1,41 @@
+:host {
+  display: block;
+  --history-border: var(--mat-sys-outline-variant, #c5d1d2);
+  --history-muted: var(--mat-sys-on-surface-variant, #455c60);
+  --history-accent: var(--mat-sys-primary, #006874);
+}
+
+.lifetime { max-width: 1280px; margin: 0 auto; padding: 28px 24px; }
+.page-heading { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+.page-heading mat-icon { color: var(--history-accent); }
+h1 { font-size: 26px; font-weight: 500; margin: 0; }
+h2 { font-size: 20px; font-weight: 500; margin: 28px 0 16px; }
+.summary { border-top: 2px solid var(--history-accent); border-bottom: 1px solid var(--history-border); }
+.metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; margin: 0; padding: 24px 0; }
+dt { color: var(--history-muted); font-size: 14px; margin-bottom: 8px; }
+dd { margin: 0; overflow-wrap: anywhere; }
+.metrics dd { font-size: 28px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.details { display: flex; flex-wrap: wrap; gap: 20px 40px; margin: 0; padding: 16px 0; border-top: 1px solid var(--history-border); }
+.details dt { font-size: 12px; margin-bottom: 4px; }
+.details dd { font-size: 14px; }
+.loading-track { height: 4px; }
+.table-scroll { overflow-x: auto; }
+table { width: 100%; table-layout: fixed; }
+.mat-column-outputFileName { width: 52%; }
+.mat-column-convertedSize { width: 20%; }
+.mat-column-percentSizeReduction { width: 20%; }
+.mat-column-crf { width: 8%; }
+.filename { overflow-wrap: anywhere; padding-top: 12px; padding-bottom: 12px; }
+.numeric { text-align: right; font-variant-numeric: tabular-nums; }
+.increased { color: var(--mat-sys-error, #ba1a1a); }
+.empty-state { text-align: center; padding: 40px 16px; color: var(--history-muted); }
+.error-state { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 0; }
+
+@media (max-width: 720px) {
+  .lifetime { padding: 20px 16px; }
+  h1 { font-size: 22px; }
+  .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 16px; }
+  .metrics dd { font-size: 24px; }
+  table { min-width: 540px; }
+  .error-state { align-items: flex-start; }
+}

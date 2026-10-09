@@ -11,3 +11,6 @@ wwwroot/
 *.log
 *.user
 *.cache
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm

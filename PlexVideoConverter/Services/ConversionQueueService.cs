@@ -26,7 +26,7 @@ public class ConversionQueueService
         QueuedProcesses.Add(fp.Id, fp);
         await PvcConversionClient.Instance.QueueStatus(GetQueueStatus());
 
-        var wasProcessed = await Instance.Enqueue(() => FfmpegCoreService.Instance.ConvertVideoAsync(ref fp), fp.Id);
+        var wasProcessed = await Instance.Enqueue(() => FfmpegCoreService.Instance.ConvertVideoAsync(fp), fp.Id);
 
         if (wasProcessed)
         {
@@ -56,6 +56,12 @@ public class ConversionQueueService
             await PvcConversionClient.Instance.QueueStatus(GetQueueStatus());
             await taskGenerator();
             return true;
+        }
+        catch (Exception ex)
+        {
+            logger.Error(ex, $"Conversion {processId} failed; it will not be marked complete.");
+            ActiveProcesses.Remove(processId);
+            return false;
         }
         finally
         {

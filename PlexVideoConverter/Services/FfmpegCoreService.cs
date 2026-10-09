@@ -14,6 +14,7 @@ public class FfmpegCoreService
     private static Logger logger = LogManager.GetCurrentClassLogger();
 
     private SemaphoreSlim sem;
+    private ConversionHistoryService? historyService;
     
     public Dictionary<Guid, ConversionProcess> FileProcesses { get; set; } = new();
     public Dictionary<Guid, ConversionProcess> CompletedFileProcesses { get; set; } = new();
@@ -21,6 +22,11 @@ public class FfmpegCoreService
     public FfmpegCoreService()
     {
         sem = new SemaphoreSlim(1, 1);
+    }
+
+    public static void InitializeHistory(ConversionHistoryService history)
+    {
+        Instance.historyService = history;
     }
 
     /// <summary>
@@ -48,10 +54,11 @@ public class FfmpegCoreService
         }
     }
 
-    public Task ConvertVideoAsync(ref ConversionProcess fp)
+    public async Task ConvertVideoAsync(ConversionProcess fp)
     {
         try
         {
+            var history = historyService ?? throw new InvalidOperationException("Conversion history is not initialized.");
             var outputPath =
                 SettingsService.Instance.GetExportSettings().FirstOrDefault()?
                     .FolderPath;
@@ -73,12 +80,14 @@ public class FfmpegCoreService
 
             var videoDuration = FFProbe.Analyse(fp.FilePath).Duration;
             var videoQuality = SettingsService.Instance.FfmpegSettings?.videoQuality ?? 24;
+            var originalSize = new FileInfo(fp.FilePath).Length;
             var reportPercentProgressFrontend = SettingsService.Instance.FfmpegSettings?.reportPercentProgressFrontend ?? 1;
             var reportPercentProgressLogging = SettingsService.Instance.FfmpegSettings?.reportPercentProgressLogging ?? 20;
 
             logger.Info($"Ffmpeg has crf={videoQuality}");
 
-            return FFMpegArguments
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            var succeeded = await FFMpegArguments
                 .FromFileInput(fp.FilePath)
                 .OutputToFile(outputFilePath, false, options => options
                     .WithVideoCodec(VideoCodec.LibX265)
@@ -86,6 +95,19 @@ public class FfmpegCoreService
                     .WithFastStart())
                 .NotifyOnProgress(ProgressHandler, videoDuration)
                 .ProcessAsynchronously();
+            stopwatch.Stop();
+            if (!succeeded)
+                throw new InvalidOperationException("FFmpeg did not complete successfully.");
+
+            var outputFile = new FileInfo(outputFilePath);
+            var convertedSize = outputFile.Length;
+            var reduction = ConversionHistoryService.CalculatePercentSizeReduction(originalSize, convertedSize);
+            history.Record(new ConversionHistoryResponse(fp.Id, originalSize, convertedSize,
+                PathUtils.GetFileName(fp.FilePath), outputFile.Name, Path.GetFullPath(fp.FilePath),
+                outputFile.FullName, DateTimeOffset.UtcNow, reduction, videoQuality, "libx265", stopwatch.Elapsed.TotalSeconds));
+            fp.InputSizeGB = (originalSize / Math.Pow(1024, 3)).ToString(System.Globalization.CultureInfo.InvariantCulture);
+            fp.OutputSizeGB = (convertedSize / Math.Pow(1024, 3)).ToString(System.Globalization.CultureInfo.InvariantCulture);
+            logger.Info($"Stats for {outputFile.Name}: {originalSize} -> {convertedSize} bytes, {reduction:F2}% saved");
 
             void ProgressHandler(double p)
             {
@@ -110,7 +132,8 @@ public class FfmpegCoreService
         catch (Exception ex)
         {
             logger.Error("Error during video conversion. " + ex.Message, ex);
-            return Task.CompletedTask;
+            FileProcesses.Remove(fp.Id);
+            throw;
         }
     }
 
@@ -132,8 +155,6 @@ public class FfmpegCoreService
             // File.Move will not create a missing destination directory itself
             if (!string.IsNullOrEmpty(completedPath)) Directory.CreateDirectory(completedPath);
 
-            CalculateConversionStats(fp.FilePath);
-
             logger.Info($"Finished converting video, moving to: {destinationPath}");
 
             File.Move(fp.FilePath, destinationPath);
@@ -146,34 +167,4 @@ public class FfmpegCoreService
         }
     }
 
-    private void CalculateConversionStats(string inputFilePath)
-    {
-        var outputPath =
-            SettingsService.Instance.GetExportSettings().FirstOrDefault()?
-                .FolderPath;
-
-        var outputFileName = PathUtils.GetFileName(inputFilePath).Replace(".mp4", ".mkv");
-        var outputFilePath = Path.Combine(outputPath ?? string.Empty, outputFileName);
-
-        var fiInput = new FileInfo(inputFilePath);
-        var fiOutput = new FileInfo(outputFilePath);
-
-        if (!fiInput.Exists)
-        {
-            logger.Error("Cannot find Input file for final stats. File Path: " + inputFilePath);
-            return;
-        } if (!fiOutput.Exists)
-        {
-            logger.Error("Cannot find Output file for final stats. File Path: " + outputFilePath);
-            return;
-        }
-
-        var inputFileSize = fiInput.Length >> 20;
-        var outputFileSize = fiOutput.Length >> 20;
-        var savingsPercent = ((double)inputFileSize - outputFileSize) / inputFileSize * 100;
-        logger.Info("Stats for file: " + fiOutput.Name);
-        logger.Info("Input File Size: " + inputFileSize + " MB");
-        logger.Info("Output File Save: " + outputFileSize + " MB");
-        logger.Info("Total conversion savings: " + Math.Floor(savingsPercent) + "%");
-    }
 }

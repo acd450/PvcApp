@@ -12,6 +12,7 @@ export const routes: Routes = [
     providers: [importProvidersFrom(FileBrowserStore, PvcAppStore)],
   },
   { path: 'list', component: PvcHomeComponent },
+  { path: 'lifetime', loadComponent: () => import('./pvc-lifetime/pvc-lifetime.component').then(module => module.PvcLifetimeComponent) },
   { path: 'settings', component: PvcSettingsComponent },
   { path: 'about', component: PvcAboutComponent },
 ];
