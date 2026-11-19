@@ -30,9 +30,7 @@ public class ConversionProcess
         FilePath = args.FullPath;
         Progress = 0;
         InputName = args.Name ?? FilePath;
-        OutputName = InputName.Substring(InputName.LastIndexOf("\\", StringComparison.Ordinal),
-                InputName.Length - InputName.LastIndexOf("\\", StringComparison.Ordinal))
-            .Replace(".mp4", ".mkv").Replace(".avi", ".mkv");
+        OutputName = BuildOutputName(InputName);
     }
 
     public ConversionProcess(FileStats file)
@@ -41,9 +39,16 @@ public class ConversionProcess
         FilePath = file.FullPath;
         Progress = 0;
         InputName = file.FileName;
-        OutputName = InputName
-            .Replace(".mp4", ".mkv").Replace(".avi", ".mkv");
+        OutputName = BuildOutputName(InputName);
         // Use FileInfo instead of File.Open to avoid leaving an unclosed handle that locks the file
         InputSizeGB = ((double)(new FileInfo(file.FullPath).Length >> 20) / 1024).ToString();
+    }
+
+    public static string BuildOutputName(string inputName)
+    {
+        return PathUtils.GetFileName(inputName)
+            .Replace(".mp4", ".mkv")
+            .Replace(".avi", ".mkv")
+            .Replace("264", "265");
     }
 }

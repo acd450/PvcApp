@@ -38,6 +38,9 @@ try
     builder.Services.AddMvc(option => option.EnableEndpointRouting = false);
     builder.Services.AddSingleton<FileListenerService>();
     builder.Services.AddSingleton<FfmpegCoreService>();
+    builder.Services.AddSingleton(_ => new ConversionHistoryService(
+        Path.Combine(builder.Environment.ContentRootPath,
+            builder.Configuration["ConversionHistory:DatabasePath"] ?? "App_Data/conversions.sqlite")));
     builder.Logging.ClearProviders();
     builder.Host.UseNLog();
 
@@ -61,11 +64,11 @@ try
             options.RoutePrefix = "swagger";
         });
     }
-    var appSettingsFile = "appsettings.json";
-    if (app.Environment.IsDevelopment()) { appSettingsFile = "appsettings.development.json"; }
+    var appSettingsFile = $"appsettings.{app.Environment.EnvironmentName}.json";
 
     var config = new ConfigurationBuilder()
-        .SetBasePath(Directory.GetCurrentDirectory())
+        .SetBasePath(app.Environment.ContentRootPath)
+        .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
         .AddJsonFile(appSettingsFile, optional: true, reloadOnChange: true)
         .Build();
 
@@ -134,14 +137,23 @@ try
                 //spa.UseAngularCliServer(npmScript: "start");
                 string angularProjectPath = spa.Options.SourcePath;
 
-                ProcessStartInfo psi = new ProcessStartInfo
-                {
-                    FileName = "npm",
-                    Arguments = "start",
-                    WorkingDirectory = angularProjectPath,
-                    UseShellExecute = true,
-                    WindowStyle = ProcessWindowStyle.Minimized
-                };
+                // npm ships as a .cmd shim on Windows, which only resolves through a shell
+                ProcessStartInfo psi = OperatingSystem.IsWindows()
+                    ? new ProcessStartInfo
+                    {
+                        FileName = "cmd.exe",
+                        Arguments = "/c npm start",
+                        WorkingDirectory = angularProjectPath,
+                        UseShellExecute = true,
+                        WindowStyle = ProcessWindowStyle.Minimized
+                    }
+                    : new ProcessStartInfo
+                    {
+                        FileName = "npm",
+                        Arguments = "start",
+                        WorkingDirectory = angularProjectPath,
+                        UseShellExecute = false
+                    };
 
                 Process? npmProcess = Process.Start(psi);
                 SettingsService.Instance.npmProcess = npmProcess;
@@ -157,6 +169,7 @@ try
     SettingsService.Instance.FfmpegSettings = config.GetSection("FfmpegSettings").Get<FfmpegSettings>();
     SettingsService.Instance.PopulateGlobalSettings();
     
+    FfmpegCoreService.InitializeHistory(app.Services.GetRequiredService<ConversionHistoryService>());
     PvcConversionClient.Initialize(app.Services.GetRequiredService<IHubContext<PvcConversionHub>>());
 
     await app.StartAsync();

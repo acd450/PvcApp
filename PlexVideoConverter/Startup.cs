@@ -23,6 +23,7 @@ public class Startup : IHostedService
 
     private void OnStopping()
     {
-        SettingsService.Instance.npmProcess?.Kill();
+        // Kill the tree: npm spawns the Angular CLI as a child process
+        SettingsService.Instance.npmProcess?.Kill(entireProcessTree: true);
     }
 }

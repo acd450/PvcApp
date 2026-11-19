@@ -3,6 +3,7 @@ import {MatIconModule} from '@angular/material/icon';
 import {CommonModule} from '@angular/common';
 import {MatButtonModule} from '@angular/material/button';
 import {MatToolbarModule} from '@angular/material/toolbar';
+import {MatTooltipModule} from '@angular/material/tooltip';
 import {RouterLink} from '@angular/router';
 
 @Component({
@@ -12,6 +13,7 @@ import {RouterLink} from '@angular/router';
     MatIconModule,
     MatButtonModule,
     MatToolbarModule,
+    MatTooltipModule,
     RouterLink,
   ],
   templateUrl: './nav-bar.component.html',
